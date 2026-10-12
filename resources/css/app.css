@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@layer theme, base, primevue, components, utilities;
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-primary: #6366F1;
+    --color-primary-hover: #4F46E5;
+    --color-background: #F8F9FA;
+    --radius-card: 24px;
+    --shadow-card: 0 2px 20px #00000006;
+    --shadow-glow: 0 4px 14px #6366F140;
+}
+
+@layer primevue {
+    /* Globally override DataTable padding for the borderless list aesthetic */
+    .p-datatable .p-datatable-thead > tr > th {
+        background: transparent !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    .p-datatable .p-datatable-tbody > tr > td {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+}

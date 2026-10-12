@@ -1,0 +1,176 @@
+<script setup lang="ts">
+import Swal from 'sweetalert2';
+import { ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
+
+const props = defineProps<{
+    teachers: {
+        data: Array<{
+            id: number;
+            employee_number: string | null;
+            name: string;
+            phone: string | null;
+            email: string | null;
+            status: string;
+        }>;
+        links: any[];
+    };
+    filters: {
+        search?: string;
+    };
+}>();
+
+const search = ref(props.filters.search || '');
+
+function debounce(fn: Function, delay: number) {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+watch(search, debounce((value: string) => {
+    router.get('/teachers', { search: value }, { preserveState: true, replace: true });
+}, 300));
+
+const deleteTeacher = (id: number) => {
+    Swal.fire({
+        title: 'Konfirmasi Tindakan',
+        text: 'Apakah Anda yakin ingin menghapus data guru ini?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#B42318',
+        cancelButtonColor: '#697586',
+        confirmButtonText: 'Ya, Lanjutkan',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.delete(`/teachers/${id}`);
+        }
+    });
+};
+</script>
+
+<template>
+    <Head title="Data Guru - Disiplin Pro" />
+
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex items-center justify-between w-full pr-4">
+                <span class="text-[#697586] text-sm">Data Master <span class="mx-1">/</span> <span class="text-[#202B3C] font-semibold">Guru</span></span>
+            </div>
+        </template>
+
+        <div class="max-w-7xl mx-auto space-y-6">
+            <!-- Header Area -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-[#202B3C] tracking-tight">Data Guru</h1>
+                    <p class="text-[#697586] mt-1 text-sm">Kelola daftar guru dan wali kelas.</p>
+                </div>
+                <Link 
+                    href="/teachers/create" 
+                    class="inline-flex items-center justify-center bg-[#1D3557] hover:bg-[#0D1B2A] text-white text-sm font-medium py-2 px-4 rounded transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D3557]"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Guru
+                </Link>
+            </div>
+
+            <!-- Toolbar (Search) -->
+            <div class="bg-white p-4 border border-[#E5E9EF] shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="w-full sm:max-w-md relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#697586]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input 
+                        v-model="search"
+                        type="text" 
+                        placeholder="Cari berdasarkan NIP atau Nama..." 
+                        class="block w-full pl-9 pr-3 py-2 border border-[#E5E9EF] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] bg-[#F7F8FA] focus:bg-white transition-colors"
+                    >
+                </div>
+            </div>
+
+            <!-- Flash Messages -->
+            <div v-if="$page.props.flash?.success" class="bg-[#237A57]/10 border border-[#237A57]/30 text-[#237A57] px-4 py-3 rounded text-sm font-medium">
+                {{ $page.props.flash.success }}
+            </div>
+            <div v-if="$page.props.flash?.error" class="bg-[#B42318]/10 border border-[#B42318]/30 text-[#B42318] px-4 py-3 rounded text-sm font-medium">
+                {{ $page.props.flash.error }}
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white border border-[#E5E9EF] shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[#F7F8FA] text-[#697586] font-semibold text-xs uppercase tracking-wider border-b border-[#E5E9EF]">
+                            <tr>
+                                <th class="px-5 py-3 w-40">NIP / NUPTK</th>
+                                <th class="px-5 py-3">Nama Guru</th>
+                                <th class="px-5 py-3">Kontak</th>
+                                <th class="px-5 py-3 w-32 text-center">Status</th>
+                                <th class="px-5 py-3 w-32 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[#E5E9EF]">
+                            <tr v-for="teacher in teachers.data" :key="teacher.id" class="hover:bg-[#F7F8FA]/80 transition-colors">
+                                <td class="px-5 py-3 text-[#697586]">{{ teacher.employee_number || '-' }}</td>
+                                <td class="px-5 py-3 text-[#202B3C] font-medium">{{ teacher.name }}</td>
+                                <td class="px-5 py-3 text-[#697586]">
+                                    <div v-if="teacher.phone || teacher.email">
+                                        <div v-if="teacher.phone">{{ teacher.phone }}</div>
+                                        <div v-if="teacher.email" class="text-xs">{{ teacher.email }}</div>
+                                    </div>
+                                    <div v-else>-</div>
+                                </td>
+                                <td class="px-5 py-3 text-center">
+                                    <span 
+                                        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
+                                        :class="(teacher.status.toLowerCase() === 'active' || teacher.status.toLowerCase() === 'aktif') ? 'bg-[#237A57]/10 text-[#237A57]' : 'bg-[#697586]/10 text-[#697586]'"
+                                    >
+                                        {{ teacher.status }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3 text-right space-x-3">
+                                    <Link :href="`/teachers/${teacher.id}/edit`" class="text-[#315E8A] hover:text-[#1D3557] font-medium transition-colors">Edit</Link>
+                                    <button @click="deleteTeacher(teacher.id)" class="text-[#B42318] hover:text-red-800 font-medium transition-colors">Hapus</button>
+                                </td>
+                            </tr>
+                            <tr v-if="teachers.data.length === 0">
+                                <td colspan="5" class="px-5 py-10 text-center text-[#697586]">
+                                    <p class="text-sm font-medium">Tidak ada data guru ditemukan.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="teachers.links.length > 3" class="px-5 py-4 border-t border-[#E5E9EF] flex items-center justify-between">
+                    <div class="flex items-center space-x-1">
+                        <Link 
+                            v-for="(link, index) in teachers.links" 
+                            :key="index"
+                            :href="link.url || '#'"
+                            class="px-3 py-1 text-sm border rounded transition-colors"
+                            :class="[
+                                link.active ? 'bg-[#1D3557] text-white border-[#1D3557]' : 'text-[#697586] border-[#E5E9EF] hover:bg-[#F7F8FA]',
+                                !link.url && 'opacity-50 cursor-not-allowed hover:bg-white'
+                            ]"
+                            v-html="link.label"
+                            preserve-scroll
+                        />
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </AuthenticatedLayout>
+</template>
