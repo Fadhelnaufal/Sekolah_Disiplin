@@ -15,6 +15,8 @@ const props = defineProps<{
             event_type: string;
             points_effect: number;
             description?: string;
+            attachment_path?: string;
+            attachment_url?: string;
             student: { id: number; name: string; nis: string; parent_name?: string; parent_phone?: string; class_room?: { name: string } } | null;
             violation: { name: string; code: string } | null;
             achievement: { name: string; code: string } | null;
@@ -68,6 +70,19 @@ const deleteEvent = (id: number) => {
 const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
+};
+
+const previewAttachment = (url: string) => {
+    Swal.fire({
+        title: 'Lampiran Bukti Foto',
+        imageUrl: url,
+        imageAlt: 'Bukti Foto Kejadian',
+        imageWidth: 460,
+        imageHeight: 'auto',
+        showCloseButton: true,
+        confirmButtonColor: '#6366F1',
+        confirmButtonText: 'Tutup',
+    });
 };
 
 const sendWhatsAppEvent = (item: any) => {
@@ -194,7 +209,19 @@ const sendWhatsAppEvent = (item: any) => {
                             <span class="text-xs font-semibold text-gray-400 uppercase">Deskripsi Kejadian</span>
                         </template>
                         <template #body="slotProps">
-                            <span class="text-gray-700 text-[13px]">{{ slotProps.data.event_type === 'violation' ? slotProps.data.violation?.name : slotProps.data.achievement?.name }}</span>
+                            <div class="flex flex-col gap-1 items-start">
+                                <span class="text-gray-700 text-[13px]">{{ slotProps.data.event_type === 'violation' ? slotProps.data.violation?.name : slotProps.data.achievement?.name }}</span>
+                                <button
+                                    v-if="slotProps.data.attachment_url"
+                                    type="button"
+                                    @click="previewAttachment(slotProps.data.attachment_url)"
+                                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors focus:outline-none"
+                                    title="Lihat foto bukti"
+                                >
+                                    <i class="pi pi-image text-[10px]"></i>
+                                    <span>Bukti Foto</span>
+                                </button>
+                            </div>
                         </template>
                     </Column>
                     

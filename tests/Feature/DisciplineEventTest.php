@@ -14,7 +14,9 @@ use App\Models\User;
 use App\Models\Violation;
 use App\Services\StudentPointService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DisciplineEventTest extends TestCase
@@ -353,5 +355,99 @@ class DisciplineEventTest extends TestCase
             'points_effect' => 15,
             'recorded_by' => $bkUser->id,
         ]);
+    }
+
+    public function test_user_can_create_bulk_discipline_events_for_multiple_students(): void
+    {
+        [$semester, $student1, $teacherUser] = $this->createDependencies();
+
+        $student2 = Student::create([
+            'school_id' => $student1->school_id,
+            'class_room_id' => $student1->class_room_id,
+            'nis' => '100101',
+            'name' => 'Siswa Test 2',
+            'status' => 'Active',
+        ]);
+
+        $student3 = Student::create([
+            'school_id' => $student1->school_id,
+            'class_room_id' => $student1->class_room_id,
+            'nis' => '100102',
+            'name' => 'Siswa Test 3',
+            'status' => 'Active',
+        ]);
+
+        $violation = Violation::create([
+            'code' => 'VIO-BULK',
+            'name' => 'Terlambat Massal Upacara',
+            'category' => 'Ringan',
+            'points' => 5,
+        ]);
+
+        $response = $this->actingAs($teacherUser)->post(route('discipline-events.store'), [
+            'student_ids' => [$student1->id, $student2->id, $student3->id],
+            'event_date' => now()->format('Y-m-d'),
+            'event_type' => 'violation',
+            'violation_id' => $violation->id,
+            'description' => 'Terjaring razia gerbang pagi',
+            'original_recorder_name' => 'Tim Tatib',
+        ]);
+
+        $response->assertRedirect(route('discipline-events.index'));
+        $response->assertSessionHas('success', 'Catatan pelanggaran untuk 3 siswa berhasil disimpan serentak.');
+
+        $this->assertDatabaseHas('discipline_events', [
+            'student_id' => $student1->id,
+            'violation_id' => $violation->id,
+            'points_effect' => 5,
+            'original_recorder_name' => 'Tim Tatib',
+        ]);
+        $this->assertDatabaseHas('discipline_events', [
+            'student_id' => $student2->id,
+            'violation_id' => $violation->id,
+            'points_effect' => 5,
+            'original_recorder_name' => 'Tim Tatib',
+        ]);
+        $this->assertDatabaseHas('discipline_events', [
+            'student_id' => $student3->id,
+            'violation_id' => $violation->id,
+            'points_effect' => 5,
+            'original_recorder_name' => 'Tim Tatib',
+        ]);
+    }
+
+    public function test_user_can_upload_photo_evidence_attachment(): void
+    {
+        Storage::fake('public');
+        [$semester, $student, $teacherUser] = $this->createDependencies();
+
+        $violation = Violation::create([
+            'code' => 'VIO-PHOTO',
+            'name' => 'Membawa Barang Terlarang',
+            'category' => 'Sedang',
+            'points' => 20,
+        ]);
+
+        $file = UploadedFile::fake()->image('barang_sitaan.jpg');
+
+        $response = $this->actingAs($teacherUser)->post(route('discipline-events.store'), [
+            'student_id' => $student->id,
+            'event_date' => now()->format('Y-m-d'),
+            'event_type' => 'violation',
+            'violation_id' => $violation->id,
+            'description' => 'Penyitaan rokok elektrik saat razia',
+            'attachment' => $file,
+        ]);
+
+        $response->assertRedirect(route('discipline-events.index'));
+
+        $event = DisciplineEvent::where('student_id', $student->id)
+            ->where('violation_id', $violation->id)
+            ->first();
+
+        $this->assertNotNull($event);
+        $this->assertNotNull($event->attachment_path);
+        Storage::disk('public')->assertExists($event->attachment_path);
+        $this->assertStringContainsString('/storage/', $event->attachment_url);
     }
 }

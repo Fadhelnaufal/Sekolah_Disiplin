@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Achievement;
+use App\Models\ClassRoom;
 use App\Models\DisciplineEvent;
 use App\Models\Semester;
 use App\Models\Student;
@@ -66,9 +67,8 @@ class DisciplineEventController extends Controller
 
         $studentsQuery = Student::with('classRoom')->whereIn('status', ['Active', 'aktif', 'Aktif']);
 
-        // Removed teacher homeroom restriction for dropdown so all teachers can report any student
-
         $students = $studentsQuery->orderBy('name')->get(['id', 'name', 'nis', 'class_room_id', 'parent_name', 'parent_phone']);
+        $classes = ClassRoom::orderBy('grade_level')->orderBy('name')->get(['id', 'name', 'grade_level']);
         $violations = Violation::orderBy('code')->get(['id', 'code', 'name', 'points']);
         $achievements = Achievement::orderBy('code')->get(['id', 'code', 'name', 'deduction_points as points']);
 
@@ -80,6 +80,7 @@ class DisciplineEventController extends Controller
 
         return Inertia::render('DisciplineEvents/Create', [
             'students' => $students,
+            'classes' => $classes,
             'violations' => $violations,
             'achievements' => $achievements,
             'activeSemester' => $activeSemester,
@@ -96,7 +97,9 @@ class DisciplineEventController extends Controller
         }
 
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'student_id' => 'required_without:student_ids|nullable|exists:students,id',
+            'student_ids' => 'required_without:student_id|nullable|array|min:1',
+            'student_ids.*' => 'exists:students,id',
             'event_date' => 'required|date',
             'event_type' => 'required|in:violation,achievement',
             'violation_id' => 'required_if:event_type,violation|nullable|exists:violations,id',
@@ -104,6 +107,7 @@ class DisciplineEventController extends Controller
             'description' => 'nullable|string',
             'follow_up' => 'nullable|string',
             'original_recorder_name' => 'nullable|string|max:255',
+            'attachment' => 'nullable|file|image|max:5120',
         ]);
 
         $user = auth()->user();
@@ -112,7 +116,6 @@ class DisciplineEventController extends Controller
             if (! $teacher) {
                 abort(403, 'Akses ditolak: Anda belum terdaftar sebagai Guru.');
             }
-            // Removed homeroom check. All teachers can record events.
         }
 
         $points = 0;
@@ -122,23 +125,50 @@ class DisciplineEventController extends Controller
             $validated['achievement_id'] = null;
         } else {
             $achievement = Achievement::find($validated['achievement_id']);
-            // Convert to negative value for achievement
             $points = -abs($achievement->deduction_points);
             $validated['violation_id'] = null;
         }
 
-        $validated['semester_id'] = $activeSemester->id;
-        $validated['points_effect'] = $points; // Never trust user input, overwrite from DB.
-        $validated['recorded_by'] = Auth::id();
-        $validated['original_recorder_name'] = $validated['original_recorder_name'] ?? (Auth::user()?->name ?? 'Petugas');
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('discipline-events', 'public');
+        }
 
-        DB::transaction(function () use ($validated) {
-            $event = DisciplineEvent::create($validated);
-            $type = $event->event_type === 'violation' ? 'pelanggaran' : 'prestasi';
-            AuditService::logCreated($event, "Mencatat {$type} siswa");
+        $studentIds = ! empty($validated['student_ids'])
+            ? array_unique($validated['student_ids'])
+            : [$validated['student_id']];
+
+        $recorderName = $validated['original_recorder_name'] ?? (Auth::user()?->name ?? 'Petugas');
+
+        DB::transaction(function () use ($studentIds, $validated, $points, $activeSemester, $attachmentPath, $recorderName) {
+            foreach ($studentIds as $sid) {
+                $event = DisciplineEvent::create([
+                    'student_id' => $sid,
+                    'semester_id' => $activeSemester->id,
+                    'event_date' => $validated['event_date'],
+                    'event_type' => $validated['event_type'],
+                    'violation_id' => $validated['violation_id'] ?? null,
+                    'achievement_id' => $validated['achievement_id'] ?? null,
+                    'points_effect' => $points,
+                    'description' => $validated['description'] ?? null,
+                    'follow_up' => $validated['follow_up'] ?? null,
+                    'recorded_by' => Auth::id(),
+                    'original_recorder_name' => $recorderName,
+                    'attachment_path' => $attachmentPath,
+                ]);
+
+                $type = $event->event_type === 'violation' ? 'pelanggaran' : 'prestasi';
+                AuditService::logCreated($event, "Mencatat {$type} siswa");
+            }
         });
 
-        return redirect()->route('discipline-events.index')->with('success', 'Catatan '.($validated['event_type'] === 'violation' ? 'pelanggaran' : 'prestasi').' berhasil disimpan.');
+        $count = count($studentIds);
+        $typeName = $validated['event_type'] === 'violation' ? 'pelanggaran' : 'prestasi';
+        $message = $count > 1
+            ? "Catatan {$typeName} untuk {$count} siswa berhasil disimpan serentak."
+            : "Catatan {$typeName} berhasil disimpan.";
+
+        return redirect()->route('discipline-events.index')->with('success', $message);
     }
 
     public function destroy(DisciplineEvent $disciplineEvent)

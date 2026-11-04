@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Swal from 'sweetalert2';
 import { ref, watch, computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
@@ -29,6 +30,7 @@ const props = defineProps<{
             points_effect: number;
             description: string | null;
             follow_up: string | null;
+            attachment_url?: string | null;
             violation: { name: string; code: string } | null;
             achievement: { name: string; code: string } | null;
             recorded_by: { name: string } | null;
@@ -145,6 +147,19 @@ const canEditCounseling = (recordCounselorId: number | null) => {
     if (userRoles.value.includes('Super Admin')) return true;
     if (userRoles.value.includes('BK') && authUser.id === recordCounselorId) return true;
     return false;
+};
+
+const previewAttachment = (url: string) => {
+    Swal.fire({
+        title: 'Lampiran Bukti Foto',
+        imageUrl: url,
+        imageAlt: 'Bukti Foto Kejadian',
+        imageWidth: 460,
+        imageHeight: 'auto',
+        showCloseButton: true,
+        confirmButtonColor: '#6366F1',
+        confirmButtonText: 'Tutup',
+    });
 };
 </script>
 
@@ -381,6 +396,16 @@ const canEditCounseling = (recordCounselorId: number | null) => {
                                                     <div v-if="event.follow_up" class="mt-2 text-xs text-amber-700 bg-amber-50/70 p-2.5 rounded-xl border border-amber-100">
                                                         <span class="block text-[10px] font-bold uppercase tracking-wider mb-0.5">Tindak Lanjut:</span>
                                                         <p>{{ event.follow_up }}</p>
+                                                    </div>
+                                                    <div v-if="event.attachment_url" class="mt-2">
+                                                        <button
+                                                            type="button"
+                                                            @click="previewAttachment(event.attachment_url)"
+                                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors focus:outline-none"
+                                                        >
+                                                            <i class="pi pi-image text-[11px]"></i>
+                                                            <span>Lihat Foto Bukti</span>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
