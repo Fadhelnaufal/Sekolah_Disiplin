@@ -10,21 +10,7 @@ class ViolationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Violation::query();
-
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('code', 'ilike', "%{$search}%")
-                  ->orWhere('category', 'ilike', "%{$search}%");
-        }
-
-        $violations = $query->orderBy('category')->orderBy('points', 'desc')->paginate(15)->withQueryString();
-
-        return Inertia::render('Violations/Index', [
-            'violations' => $violations,
-            'filters' => $request->only('search'),
-        ]);
+        return redirect()->route('master-data.index', ['tab' => 'violations']);
     }
 
     public function create()
@@ -47,20 +33,20 @@ class ViolationController extends Controller
 
         Violation::create($validated);
 
-        return redirect()->route('violations.index')->with('success', 'Master pelanggaran berhasil ditambahkan.');
+        return redirect()->route('master-data.index', ['tab' => 'violations'])->with('success', 'Master pelanggaran berhasil ditambahkan.');
     }
 
     public function edit(Violation $violation)
     {
         return Inertia::render('Violations/Form', [
-            'violation' => $violation
+            'violation' => $violation,
         ]);
     }
 
     public function update(Request $request, Violation $violation)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:violations,code,' . $violation->id,
+            'code' => 'required|string|max:50|unique:violations,code,'.$violation->id,
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:100',
             'points' => 'required|integer|min:1',
@@ -70,7 +56,7 @@ class ViolationController extends Controller
 
         $violation->update($validated);
 
-        return redirect()->route('violations.index')->with('success', 'Master pelanggaran berhasil diperbarui.');
+        return redirect()->route('master-data.index', ['tab' => 'violations'])->with('success', 'Master pelanggaran berhasil diperbarui.');
     }
 
     public function destroy(Violation $violation)
@@ -82,6 +68,6 @@ class ViolationController extends Controller
 
         $violation->delete();
 
-        return redirect()->route('violations.index')->with('success', 'Master pelanggaran berhasil dihapus.');
+        return redirect()->route('master-data.index', ['tab' => 'violations'])->with('success', 'Master pelanggaran berhasil dihapus.');
     }
 }

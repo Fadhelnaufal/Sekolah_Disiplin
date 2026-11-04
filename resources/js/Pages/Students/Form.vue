@@ -41,115 +41,115 @@ const submit = () => {
 </script>
 
 <template>
-    <Head :title="isEditing ? 'Edit Siswa - Disiplin Pro' : 'Tambah Siswa - Disiplin Pro'" />
+    <Head :title="isEditing ? 'Edit Siswa - Sekolah Disiplin' : 'Tambah Siswa - Sekolah Disiplin'" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
-                <Link href="/students" class="text-[#697586] hover:text-[#202B3C] transition-colors">Data Siswa</Link>
-                <span class="text-[#E5E9EF]">/</span>
-                <span class="text-[#202B3C]">{{ isEditing ? 'Edit Data' : 'Tambah Data' }}</span>
+                <Link href="/students" class="text-gray-500 hover:text-gray-900 transition-colors">Data Siswa</Link>
+                <span class="text-gray-300">/</span>
+                <span class="text-gray-900 font-semibold">{{ isEditing ? 'Edit Data' : 'Tambah Data' }}</span>
             </div>
         </template>
 
         <div class="max-w-3xl mx-auto space-y-6">
             <div class="mb-2">
-                <h1 class="text-2xl font-bold text-[#202B3C] tracking-tight">{{ isEditing ? 'Edit Profil Siswa' : 'Tambah Siswa Baru' }}</h1>
-                <p class="text-[#697586] mt-1 text-sm">Silakan lengkapi formulir di bawah ini dengan data diri siswa yang sesuai.</p>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ isEditing ? 'Edit Profil Siswa' : 'Tambah Siswa Baru' }}</h1>
+                <p class="text-gray-500 mt-1 text-sm">Lengkapi formulir di bawah ini dengan data diri siswa yang sesuai.</p>
             </div>
 
-            <div class="bg-white border border-[#E5E9EF] shadow-sm">
-                <form @submit.prevent="submit" class="p-6 sm:p-8 space-y-6">
+            <div class="bg-white rounded-[24px] p-7 sm:p-8 shadow-[0_2px_20px_#00000006] border border-gray-100">
+                <form @submit.prevent="submit" class="space-y-6">
                     
-                    <h3 class="text-sm font-bold text-[#14263D] border-b border-[#E5E9EF] pb-2 uppercase tracking-wide">Data Akademik</h3>
+                    <h3 class="text-xs font-bold text-gray-900 border-b border-gray-100 pb-2 uppercase tracking-wider">Data Akademik</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- NIS -->
                         <div>
-                            <label for="nis" class="block text-sm font-semibold text-[#202B3C] mb-2">NIS (Nomor Induk Siswa) <span class="text-[#B42318]">*</span></label>
+                            <label for="nis" class="block text-xs font-semibold text-gray-700 mb-1.5">NIS (Nomor Induk Siswa) <span class="text-red-600">*</span></label>
                             <input
                                 id="nis"
                                 v-model="form.nis"
                                 type="text"
                                 required
                                 placeholder="Contoh: 10102030"
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors"
-                                :class="{ 'border-[#B42318] focus:ring-[#B42318]': form.errors.nis }"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
+                                :class="{ 'border-red-500 focus:ring-red-500': form.errors.nis }"
                             />
-                            <p v-if="form.errors.nis" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.nis }}</p>
+                            <p v-if="form.errors.nis" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.nis }}</p>
                         </div>
 
                         <!-- Class -->
                         <div>
-                            <label for="class_room_id" class="block text-sm font-semibold text-[#202B3C] mb-2">Kelas <span class="text-[#B42318]">*</span></label>
+                            <label for="class_room_id" class="block text-xs font-semibold text-gray-700 mb-1.5">Kelas <span class="text-red-600">*</span></label>
                             <select
                                 id="class_room_id"
                                 v-model="form.class_room_id"
                                 required
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors appearance-none"
-                                :class="{ 'border-[#B42318] focus:ring-[#B42318]': form.errors.class_room_id }"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all cursor-pointer"
+                                :class="{ 'border-red-500 focus:ring-red-500': form.errors.class_room_id }"
                             >
                                 <option value="" disabled>Pilih Kelas</option>
                                 <option v-for="c in classRooms" :key="c.id" :value="c.id">{{ c.name }}</option>
                             </select>
-                            <p v-if="form.errors.class_room_id" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.class_room_id }}</p>
+                            <p v-if="form.errors.class_room_id" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.class_room_id }}</p>
                         </div>
                     </div>
 
                     <!-- Name -->
                     <div>
-                        <label for="name" class="block text-sm font-semibold text-[#202B3C] mb-2">Nama Lengkap Siswa <span class="text-[#B42318]">*</span></label>
+                        <label for="name" class="block text-xs font-semibold text-gray-700 mb-1.5">Nama Lengkap Siswa <span class="text-red-600">*</span></label>
                         <input
                             id="name"
                             v-model="form.name"
                             type="text"
                             required
-                            placeholder="Sesuai akta kelahiran / ijazah sebelumnya"
-                            class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors"
-                            :class="{ 'border-[#B42318] focus:ring-[#B42318]': form.errors.name }"
+                            placeholder="Sesuai akta kelahiran atau ijazah sebelumnya"
+                            class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
+                            :class="{ 'border-red-500 focus:ring-red-500': form.errors.name }"
                         />
-                        <p v-if="form.errors.name" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.name }}</p>
+                        <p v-if="form.errors.name" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.name }}</p>
                     </div>
 
-                    <h3 class="text-sm font-bold text-[#14263D] border-b border-[#E5E9EF] pb-2 pt-4 uppercase tracking-wide">Data Wali & Tambahan</h3>
+                    <h3 class="text-xs font-bold text-gray-900 border-b border-gray-100 pb-2 pt-2 uppercase tracking-wider">Data Wali & Informasi Tambahan</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Parent Name -->
                         <div>
-                            <label for="parent_name" class="block text-sm font-semibold text-[#202B3C] mb-2">Nama Orang Tua / Wali</label>
+                            <label for="parent_name" class="block text-xs font-semibold text-gray-700 mb-1.5">Nama Orang Tua / Wali</label>
                             <input
                                 id="parent_name"
                                 v-model="form.parent_name"
                                 type="text"
                                 placeholder="Nama Lengkap Wali"
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
                             />
-                            <p v-if="form.errors.parent_name" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.parent_name }}</p>
+                            <p v-if="form.errors.parent_name" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.parent_name }}</p>
                         </div>
 
                         <!-- Parent Phone -->
                         <div>
-                            <label for="parent_phone" class="block text-sm font-semibold text-[#202B3C] mb-2">No. HP / WhatsApp Wali</label>
+                            <label for="parent_phone" class="block text-xs font-semibold text-gray-700 mb-1.5">No. HP / WhatsApp Wali</label>
                             <input
                                 id="parent_phone"
                                 v-model="form.parent_phone"
                                 type="text"
                                 placeholder="Contoh: 08123456789"
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
                             />
-                            <p v-if="form.errors.parent_phone" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.parent_phone }}</p>
+                            <p v-if="form.errors.parent_phone" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.parent_phone }}</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Status -->
                         <div>
-                            <label for="status" class="block text-sm font-semibold text-[#202B3C] mb-2">Status Siswa <span class="text-[#B42318]">*</span></label>
+                            <label for="status" class="block text-xs font-semibold text-gray-700 mb-1.5">Status Siswa <span class="text-red-600">*</span></label>
                             <select
                                 id="status"
                                 v-model="form.status"
                                 required
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors appearance-none"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all cursor-pointer"
                             >
                                 <option value="Active">Aktif</option>
                                 <option value="Lulus">Lulus</option>
@@ -157,35 +157,35 @@ const submit = () => {
                                 <option value="Dikeluarkan">Dikeluarkan</option>
                                 <option value="Cuti">Cuti</option>
                             </select>
-                            <p v-if="form.errors.status" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.status }}</p>
+                            <p v-if="form.errors.status" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.status }}</p>
                         </div>
                     </div>
 
                     <!-- Notes -->
                     <div>
-                        <label for="notes" class="block text-sm font-semibold text-[#202B3C] mb-2">Catatan Khusus (Opsional)</label>
+                        <label for="notes" class="block text-xs font-semibold text-gray-700 mb-1.5">Catatan Khusus (Opsional)</label>
                         <textarea
                             id="notes"
                             v-model="form.notes"
                             rows="3"
                             placeholder="Informasi kesehatan, riwayat khusus, dll."
-                            class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors resize-y"
+                            class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all resize-y"
                         ></textarea>
-                        <p v-if="form.errors.notes" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.notes }}</p>
+                        <p v-if="form.errors.notes" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.notes }}</p>
                     </div>
 
                     <!-- Actions -->
-                    <div class="pt-6 border-t border-[#E5E9EF] flex items-center justify-end gap-3">
+                    <div class="pt-6 border-t border-gray-100 flex items-center justify-end gap-3">
                         <Link 
                             href="/students"
-                            class="px-4 py-2 text-sm font-medium text-[#697586] hover:text-[#202B3C] bg-white border border-[#E5E9EF] hover:bg-[#F7F8FA] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E5E9EF]"
+                            class="px-5 py-2.5 text-xs font-semibold text-gray-700 hover:text-gray-900 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
                         >
                             Batal
                         </Link>
                         <button 
-                            type="submit"
+                            type="submit" 
                             :disabled="form.processing"
-                            class="px-4 py-2 text-sm font-medium text-white bg-[#1D3557] hover:bg-[#0D1B2A] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D3557] disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center"
+                            class="px-6 py-2.5 text-xs font-semibold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-full transition-all shadow-[0_4px_14px_#6366F140] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center"
                         >
                             <svg v-if="form.processing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

@@ -10,8 +10,8 @@ class SanctionRule extends Model
     use HasFactory;
 
     protected $fillable = [
-        'level', 'min_points', 'max_points', 'action', 
-        'executor', 'description', 'is_active'
+        'level', 'min_points', 'max_points', 'action',
+        'executor', 'description', 'is_active',
     ];
 
     protected $casts = [

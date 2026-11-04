@@ -10,7 +10,7 @@ class Violation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code', 'name', 'category', 'points', 'description', 'is_active'
+        'code', 'name', 'category', 'points', 'description', 'is_active',
     ];
 
     protected $casts = [

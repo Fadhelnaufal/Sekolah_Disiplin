@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 return new class extends Migration
 {
@@ -10,14 +10,14 @@ return new class extends Migration
     {
         if (Storage::disk('public')->exists('letters')) {
             $files = Storage::disk('public')->files('letters');
-            
+
             foreach ($files as $file) {
                 try {
                     $sourceSize = Storage::disk('public')->size($file);
-                    
+
                     if (Storage::disk('local')->exists($file)) {
                         $targetSize = Storage::disk('local')->size($file);
-                        
+
                         if ($sourceSize === $targetSize) {
                             Storage::disk('public')->delete($file);
                             Log::info("Deleted public letter: {$file}");
@@ -34,11 +34,11 @@ return new class extends Migration
                             }
                         }
                     }
-                } catch (\Exception $e) {
-                    Log::error("Failed processing file {$file} during cleanup: " . $e->getMessage());
+                } catch (Exception $e) {
+                    Log::error("Failed processing file {$file} during cleanup: ".$e->getMessage());
                 }
             }
-            
+
             // Optionally delete directory if empty
             if (empty(Storage::disk('public')->files('letters'))) {
                 Storage::disk('public')->deleteDirectory('letters');

@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Letter;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class LetterPolicy
 {
@@ -29,7 +28,7 @@ class LetterPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['Super Admin', 'BK', 'Tata Tertib']);
+        return $user->hasAnyRole(['Super Admin', 'BK', 'Tata Tertib', 'Principal']);
     }
 
     /**
@@ -37,7 +36,15 @@ class LetterPolicy
      */
     public function update(User $user, Letter $letter): bool
     {
-        return $user->hasAnyRole(['Super Admin', 'BK']);
+        return $user->hasAnyRole(['Super Admin', 'BK', 'Tata Tertib', 'Principal']);
+    }
+
+    /**
+     * Determine whether the user can update letter templates.
+     */
+    public function updateTemplate(User $user): bool
+    {
+        return $user->hasAnyRole(['Super Admin', 'BK', 'Principal', 'Tata Tertib']);
     }
 
     /**

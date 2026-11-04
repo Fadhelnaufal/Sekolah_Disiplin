@@ -21,7 +21,7 @@ class SemesterService
     {
         // Allowed statuses are 'Draft', 'Active', 'Inactive'. We will mark it as 'Closed'.
         if ($semester->status === 'Closed') {
-            throw new \Exception("Semester is already closed.");
+            throw new \Exception('Semester is already closed.');
         }
 
         DB::beginTransaction();
@@ -31,11 +31,11 @@ class SemesterService
             $semester->update([
                 'status' => 'Closed',
                 'closed_at' => now(),
-                'closed_by' => $userId
+                'closed_by' => $userId,
             ]);
 
             // Get all students that are active or have events in this semester
-            $students = Student::where('status', 'Active')->orWhereHas('disciplineEvents', function($q) use ($semester) {
+            $students = Student::where('status', 'Active')->orWhereHas('disciplineEvents', function ($q) use ($semester) {
                 $q->where('semester_id', $semester->id);
             })->get();
 
@@ -53,7 +53,7 @@ class SemesterService
                     'achievement_points' => $achievementPoints,
                     'net_points' => $netPoints,
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ];
             }
 
@@ -63,10 +63,11 @@ class SemesterService
             }
 
             DB::commit();
+
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Failed to close semester: " . $e->getMessage());
+            Log::error('Failed to close semester: '.$e->getMessage());
             throw $e;
         }
     }

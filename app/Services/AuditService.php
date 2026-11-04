@@ -15,7 +15,7 @@ class AuditService
     {
         // Filter out sensitive data
         $hidden = ['password', 'remember_token'];
-        
+
         $old = array_diff_key($oldValues, array_flip($hidden));
         $new = array_diff_key($newValues, array_flip($hidden));
 
@@ -37,7 +37,7 @@ class AuditService
      */
     public static function logCreated(Model $model, string $description = '')
     {
-        $desc = $description ?: 'Merekam data ' . class_basename($model) . ' baru';
+        $desc = $description ?: 'Merekam data '.class_basename($model).' baru';
         self::log('created', $desc, $model, [], $model->toArray());
     }
 
@@ -48,16 +48,20 @@ class AuditService
     {
         $changes = $model->getChanges();
         $original = [];
-        
+
         foreach (array_keys($changes) as $key) {
-            if ($key === 'updated_at') continue;
+            if ($key === 'updated_at') {
+                continue;
+            }
             $original[$key] = $model->getOriginal($key);
         }
 
         // Only log if there are actual changes
-        if (empty($original)) return;
+        if (empty($original)) {
+            return;
+        }
 
-        $desc = $description ?: 'Mengubah data ' . class_basename($model);
+        $desc = $description ?: 'Mengubah data '.class_basename($model);
         self::log('updated', $desc, $model, $original, $changes);
     }
 
@@ -66,7 +70,7 @@ class AuditService
      */
     public static function logDeleted(Model $model, string $description = '')
     {
-        $desc = $description ?: 'Menghapus data ' . class_basename($model);
+        $desc = $description ?: 'Menghapus data '.class_basename($model);
         self::log('deleted', $desc, $model, $model->toArray(), []);
     }
 }

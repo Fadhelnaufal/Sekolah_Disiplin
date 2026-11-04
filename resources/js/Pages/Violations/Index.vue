@@ -56,7 +56,7 @@ const deleteViolation = (id: number) => {
 </script>
 
 <template>
-    <Head title="Master Pelanggaran - Disiplin Pro" />
+    <Head title="Master Pelanggaran - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
         <div class="max-w-[1400px] mx-auto space-y-8">
@@ -71,13 +71,6 @@ const deleteViolation = (id: number) => {
                         <i class="pi pi-plus text-xs"></i> Tambah Pelanggaran
                     </Link>
                 </div>
-            </div>
-
-            <div v-if="$page.props.flash?.success" class="bg-green-50 text-green-600 px-5 py-4 rounded-[16px] text-[14px] font-medium border border-green-100 flex items-center gap-3 shadow-sm">
-                <i class="pi pi-check-circle"></i> {{ $page.props.flash.success }}
-            </div>
-            <div v-if="$page.props.flash?.error" class="bg-red-50 text-red-600 px-5 py-4 rounded-[16px] text-[14px] font-medium border border-red-100 flex items-center gap-3 shadow-sm">
-                <i class="pi pi-exclamation-circle"></i> {{ $page.props.flash.error }}
             </div>
 
             <!-- Main Card -->
@@ -154,10 +147,10 @@ const deleteViolation = (id: number) => {
                     <Column class="text-right border-b border-gray-50 py-4 w-32">
                         <template #body="slotProps">
                             <div class="flex justify-end gap-2">
-                                <Link :href="`/violations/${slotProps.data.id}/edit`" class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors" title="Edit">
+                                <Link :href="`/violations/${slotProps.data.id}/edit`" class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1]" title="Edit">
                                     <i class="pi pi-pencil text-xs"></i>
                                 </Link>
-                                <button @click="deleteViolation(slotProps.data.id)" class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none" title="Hapus">
+                                <button @click="deleteViolation(slotProps.data.id)" class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40" title="Hapus">
                                     <i class="pi pi-trash text-xs"></i>
                                 </button>
                             </div>

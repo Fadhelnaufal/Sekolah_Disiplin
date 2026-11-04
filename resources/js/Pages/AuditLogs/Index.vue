@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps<{
@@ -19,6 +19,7 @@ const props = defineProps<{
             created_at: string;
         }>;
         links: any[];
+        current_page?: number;
     };
     filters: {
         search?: string;
@@ -57,12 +58,12 @@ const formatDate = (dateStr: string) => {
 
 const getActionColor = (action: string) => {
     switch(action.toLowerCase()) {
-        case 'created': return 'bg-green-100 text-green-800';
-        case 'updated': return 'bg-blue-100 text-blue-800';
-        case 'deleted': return 'bg-red-100 text-red-800';
-        case 'closed': return 'bg-purple-100 text-purple-800';
-        case 'imported': return 'bg-orange-100 text-orange-800';
-        default: return 'bg-gray-100 text-gray-800';
+        case 'created': return 'bg-emerald-50 text-emerald-700';
+        case 'updated': return 'bg-blue-50 text-blue-700';
+        case 'deleted': return 'bg-rose-50 text-rose-700';
+        case 'closed': return 'bg-purple-50 text-purple-700';
+        case 'imported': return 'bg-amber-50 text-amber-700';
+        default: return 'bg-gray-100 text-gray-700';
     }
 };
 
@@ -89,147 +90,153 @@ const toggleDetails = (id: number) => {
 </script>
 
 <template>
-    <Head title="Audit Logs - Disiplin Pro" />
+    <Head title="Audit Logs - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Audit Logs Sistem</h2>
+            <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
+                <span class="text-gray-500">Pengaturan</span>
+                <span class="text-gray-300">/</span>
+                <span class="text-gray-900 font-semibold">Log Aktivitas</span>
+            </div>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900">
-                        <!-- Filters -->
-                        <div class="flex flex-col md:flex-row gap-4 mb-6">
-                            <div class="flex-1">
-                                <input 
-                                    v-model="search" 
-                                    type="text" 
-                                    placeholder="Cari deskripsi atau pengguna..." 
-                                    class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                >
-                            </div>
-                            <div class="w-full md:w-48">
-                                <select v-model="actionType" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
-                                    <option value="">Semua Aksi</option>
-                                    <option value="created">Create</option>
-                                    <option value="updated">Update</option>
-                                    <option value="deleted">Delete</option>
-                                    <option value="closed">Close</option>
-                                    <option value="imported">Import</option>
-                                </select>
-                            </div>
-                            <div class="w-full md:w-48">
-                                <input v-model="startDate" type="date" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" title="Tanggal Mulai">
-                            </div>
-                            <div class="w-full md:w-48">
-                                <input v-model="endDate" type="date" class="w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" title="Tanggal Selesai">
-                            </div>
-                        </div>
+        <div class="max-w-[1400px] mx-auto space-y-6">
+            <!-- Header Area -->
+            <div>
+                <h1 class="text-[28px] font-bold text-gray-900 tracking-tight">Audit Logs Sistem</h1>
+                <p class="text-gray-500 text-[15px] mt-0.5">Rekam jejak aktivitas, mutasi data, dan audit keamanan sistem.</p>
+            </div>
 
-                        <!-- Table -->
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 border">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengguna</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Detail</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <template v-for="log in logs.data" :key="log.id">
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {{ formatDate(log.created_at) }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {{ log.user?.name || 'Sistem' }}
-                                                <div class="text-xs text-gray-400 font-normal">{{ log.ip_address }}</div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <span :class="`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getActionColor(log.action)}`">
-                                                    {{ getActionLabel(log.action) }}
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-gray-500">
-                                                {{ log.description }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button v-if="log.old_values || log.new_values || log.metadata" @click="toggleDetails(log.id)" class="text-indigo-600 hover:text-indigo-900">
-                                                    {{ expandedLogs.includes(log.id) ? 'Tutup' : 'Lihat' }}
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr v-if="expandedLogs.includes(log.id)" class="bg-gray-50">
-                                            <td colspan="5" class="px-6 py-4">
-                                                <div class="text-xs text-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div v-if="log.old_values">
-                                                        <h4 class="font-bold text-red-700 mb-2">Sebelum:</h4>
-                                                        <pre class="bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(log.old_values, null, 2) }}</pre>
-                                                    </div>
-                                                    <div v-if="log.new_values">
-                                                        <h4 class="font-bold text-green-700 mb-2">Sesudah / Baru:</h4>
-                                                        <pre class="bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(log.new_values, null, 2) }}</pre>
-                                                    </div>
-                                                    <div v-if="log.metadata && !log.old_values && !log.new_values" class="md:col-span-2">
-                                                        <h4 class="font-bold text-gray-700 mb-2">Metadata:</h4>
-                                                        <pre class="bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-2 text-xs text-gray-500">
-                                                    <strong>Model:</strong> {{ log.subject_type || '-' }} | <strong>ID:</strong> {{ log.subject_id || '-' }}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                    <tr v-if="logs.data.length === 0">
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            Tidak ada catatan audit yang ditemukan.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Pagination -->
-                        <div class="mt-4 flex items-center justify-between" v-if="logs.links.length > 3">
-                            <div class="flex-1 flex justify-between sm:hidden">
-                                <a :href="logs.links[0].url" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Previous
-                                </a>
-                                <a :href="logs.links[logs.links.length - 1].url" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Next
-                                </a>
-                            </div>
-                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-700">
-                                        Menampilkan halaman
-                                        <span class="font-medium">{{ logs.current_page || 1 }}</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                        <a v-for="(link, index) in logs.links" 
-                                           :key="index"
-                                           :href="link.url || '#'" 
-                                           class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                                           :class="[
-                                                link.active ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50',
-                                                !link.url && 'opacity-50 cursor-not-allowed'
-                                           ]"
-                                           v-html="link.label">
-                                        </a>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
-
+            <!-- Card Container -->
+            <div class="bg-white rounded-[24px] p-7 shadow-[0_2px_20px_#00000006] space-y-5 border border-gray-100">
+                <!-- Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-1 relative">
+                        <i class="pi pi-search absolute left-3.5 top-3 text-gray-400 text-xs"></i>
+                        <input 
+                            v-model="search" 
+                            type="text" 
+                            placeholder="Cari deskripsi atau pengguna..." 
+                            class="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                        >
                     </div>
+                    <div>
+                        <select 
+                            v-model="actionType" 
+                            class="w-full px-3.5 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6366F1] cursor-pointer"
+                        >
+                            <option value="">Semua Aksi</option>
+                            <option value="created">Create</option>
+                            <option value="updated">Update</option>
+                            <option value="deleted">Delete</option>
+                            <option value="closed">Close</option>
+                            <option value="imported">Import</option>
+                        </select>
+                    </div>
+                    <div>
+                        <input 
+                            v-model="startDate" 
+                            type="date" 
+                            class="w-full px-3.5 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6366F1]" 
+                            title="Tanggal Mulai"
+                        >
+                    </div>
+                    <div>
+                        <input 
+                            v-model="endDate" 
+                            type="date" 
+                            class="w-full px-3.5 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6366F1]" 
+                            title="Tanggal Selesai"
+                        >
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                <th class="pb-3 text-left w-48">Waktu</th>
+                                <th class="pb-3 text-left w-52">Pengguna</th>
+                                <th class="pb-3 text-left w-28">Aksi</th>
+                                <th class="pb-3 text-left">Deskripsi</th>
+                                <th class="pb-3 text-right w-20">Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50 text-sm">
+                            <template v-for="log in logs.data" :key="log.id">
+                                <tr class="hover:bg-gray-50/60 transition-colors">
+                                    <td class="py-4 text-xs font-mono text-gray-500">
+                                        {{ formatDate(log.created_at) }}
+                                    </td>
+                                    <td class="py-4 text-xs">
+                                        <div class="font-bold text-gray-900">{{ log.user?.name || 'Sistem' }}</div>
+                                        <div class="text-[11px] text-gray-400 font-mono">{{ log.ip_address || '-' }}</div>
+                                    </td>
+                                    <td class="py-4">
+                                        <span :class="`px-2.5 py-0.5 inline-flex text-[10px] font-bold uppercase rounded-md tracking-wider ${getActionColor(log.action)}`">
+                                            {{ getActionLabel(log.action) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-4 text-xs text-gray-700">
+                                        {{ log.description }}
+                                    </td>
+                                    <td class="py-4 text-right">
+                                        <button 
+                                            v-if="log.old_values || log.new_values || log.metadata" 
+                                            @click="toggleDetails(log.id)" 
+                                            class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-[#6366F1] text-gray-600 transition-colors"
+                                        >
+                                            {{ expandedLogs.includes(log.id) ? 'Tutup' : 'Lihat' }}
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr v-if="expandedLogs.includes(log.id)" class="bg-gray-50/70">
+                                    <td colspan="5" class="p-4 rounded-xl">
+                                        <div class="text-xs text-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div v-if="log.old_values">
+                                                <h4 class="font-bold text-rose-700 mb-1">Sebelum:</h4>
+                                                <pre class="bg-white p-3 rounded-xl border border-gray-200 overflow-x-auto text-[11px] font-mono">{{ JSON.stringify(log.old_values, null, 2) }}</pre>
+                                            </div>
+                                            <div v-if="log.new_values">
+                                                <h4 class="font-bold text-emerald-700 mb-1">Sesudah / Baru:</h4>
+                                                <pre class="bg-white p-3 rounded-xl border border-gray-200 overflow-x-auto text-[11px] font-mono">{{ JSON.stringify(log.new_values, null, 2) }}</pre>
+                                            </div>
+                                            <div v-if="log.metadata && !log.old_values && !log.new_values" class="md:col-span-2">
+                                                <h4 class="font-bold text-gray-700 mb-1">Metadata:</h4>
+                                                <pre class="bg-white p-3 rounded-xl border border-gray-200 overflow-x-auto text-[11px] font-mono">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-xs text-gray-500 font-mono">
+                                            Model: {{ log.subject_type || '-' }} | ID: {{ log.subject_id || '-' }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr v-if="logs.data.length === 0">
+                                <td colspan="5" class="py-12 text-center text-gray-500 text-xs">
+                                    Tidak ada catatan audit yang ditemukan.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div v-if="logs.links.length > 3" class="pt-4 border-t border-gray-100 flex items-center justify-center gap-1">
+                    <Link 
+                        v-for="(link, index) in logs.links" 
+                        :key="index"
+                        :href="link.url || '#'"
+                        class="min-w-[32px] h-8 flex items-center justify-center px-2 text-[13px] font-medium rounded-lg transition-colors"
+                        :class="[
+                            link.active ? 'bg-[#6366F1] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
+                            !link.url && 'opacity-40 cursor-not-allowed hover:bg-transparent'
+                        ]"
+                        v-html="link.label"
+                        preserve-scroll
+                    />
                 </div>
             </div>
         </div>

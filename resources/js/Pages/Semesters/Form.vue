@@ -44,119 +44,119 @@ const submit = () => {
 </script>
 
 <template>
-    <Head :title="isEditing ? 'Edit Semester - Disiplin Pro' : 'Tambah Semester - Disiplin Pro'" />
+    <Head :title="isEditing ? 'Edit Semester - Sekolah Disiplin' : 'Tambah Semester - Sekolah Disiplin'" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
-                <Link href="/semesters" class="text-[#697586] hover:text-[#202B3C] transition-colors">Semester</Link>
-                <span class="text-[#E5E9EF]">/</span>
-                <span class="text-[#202B3C]">{{ isEditing ? 'Edit Data' : 'Tambah Data' }}</span>
+                <Link href="/semesters" class="text-gray-500 hover:text-gray-900 transition-colors">Semester</Link>
+                <span class="text-gray-300">/</span>
+                <span class="text-gray-900 font-semibold">{{ isEditing ? 'Edit Data' : 'Tambah Data' }}</span>
             </div>
         </template>
 
         <div class="max-w-3xl mx-auto space-y-6">
             <div class="mb-2">
-                <h1 class="text-2xl font-bold text-[#202B3C] tracking-tight">{{ isEditing ? 'Edit Semester' : 'Tambah Semester' }}</h1>
-                <p class="text-[#697586] mt-1 text-sm">Pilih tahun ajaran dan atur periode untuk semester tersebut.</p>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ isEditing ? 'Edit Semester' : 'Tambah Semester' }}</h1>
+                <p class="text-gray-500 mt-1 text-sm">Pilih tahun ajaran dan atur periode untuk semester tersebut.</p>
             </div>
 
-            <div class="bg-white border border-[#E5E9EF] shadow-sm">
-                <form @submit.prevent="submit" class="p-6 sm:p-8 space-y-6">
+            <div class="bg-white rounded-[24px] p-7 sm:p-8 border border-gray-100 shadow-[0_2px_20px_#00000006]">
+                <form @submit.prevent="submit" class="space-y-6">
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Academic Year -->
                         <div>
-                            <label for="academic_year_id" class="block text-sm font-semibold text-[#202B3C] mb-2">Tahun Ajaran <span class="text-[#B42318]">*</span></label>
+                            <label for="academic_year_id" class="block text-xs font-semibold text-gray-700 mb-1.5">Tahun Ajaran <span class="text-red-600">*</span></label>
                             <select
                                 id="academic_year_id"
                                 v-model="form.academic_year_id"
                                 required
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors appearance-none"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all cursor-pointer"
                             >
                                 <option value="" disabled>Pilih Tahun Ajaran</option>
                                 <option v-for="ay in academicYears" :key="ay.id" :value="ay.id">
                                     {{ ay.name }} {{ ay.status === 'Active' ? '(Aktif)' : '' }}
                                 </option>
                             </select>
-                            <p v-if="form.errors.academic_year_id" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.academic_year_id }}</p>
+                            <p v-if="form.errors.academic_year_id" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.academic_year_id }}</p>
                         </div>
 
                         <!-- Name -->
                         <div>
-                            <label for="name" class="block text-sm font-semibold text-[#202B3C] mb-2">Nama Semester <span class="text-[#B42318]">*</span></label>
+                            <label for="name" class="block text-xs font-semibold text-gray-700 mb-1.5">Nama Semester <span class="text-red-600">*</span></label>
                             <select
                                 id="name"
                                 v-model="form.name"
                                 required
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors appearance-none"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all cursor-pointer"
                             >
                                 <option value="Ganjil">Ganjil</option>
                                 <option value="Genap">Genap</option>
                                 <option value="Pendek">Pendek</option>
                             </select>
-                            <p v-if="form.errors.name" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.name }}</p>
+                            <p v-if="form.errors.name" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.name }}</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Start Date -->
                         <div>
-                            <label for="start_date" class="block text-sm font-semibold text-[#202B3C] mb-2">Tanggal Mulai <span class="text-[#B42318]">*</span></label>
+                            <label for="start_date" class="block text-xs font-semibold text-gray-700 mb-1.5">Tanggal Mulai <span class="text-red-600">*</span></label>
                             <input
                                 id="start_date"
                                 v-model="form.start_date"
                                 type="date"
                                 required
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors"
-                                :class="{ 'border-[#B42318] focus:ring-[#B42318]': form.errors.start_date }"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
+                                :class="{ 'border-red-500 focus:ring-red-500': form.errors.start_date }"
                             />
-                            <p v-if="form.errors.start_date" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.start_date }}</p>
+                            <p v-if="form.errors.start_date" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.start_date }}</p>
                         </div>
 
                         <!-- End Date -->
                         <div>
-                            <label for="end_date" class="block text-sm font-semibold text-[#202B3C] mb-2">Tanggal Selesai <span class="text-[#B42318]">*</span></label>
+                            <label for="end_date" class="block text-xs font-semibold text-gray-700 mb-1.5">Tanggal Selesai <span class="text-red-600">*</span></label>
                             <input
                                 id="end_date"
                                 v-model="form.end_date"
                                 type="date"
                                 required
-                                class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors"
-                                :class="{ 'border-[#B42318] focus:ring-[#B42318]': form.errors.end_date }"
+                                class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all"
+                                :class="{ 'border-red-500 focus:ring-red-500': form.errors.end_date }"
                             />
-                            <p v-if="form.errors.end_date" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.end_date }}</p>
+                            <p v-if="form.errors.end_date" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.end_date }}</p>
                         </div>
                     </div>
 
                     <!-- Status -->
                     <div class="w-full md:w-1/2 pr-3">
-                        <label for="status" class="block text-sm font-semibold text-[#202B3C] mb-2">Status <span class="text-[#B42318]">*</span></label>
+                        <label for="status" class="block text-xs font-semibold text-gray-700 mb-1.5">Status <span class="text-red-600">*</span></label>
                         <select
                             id="status"
                             v-model="form.status"
                             required
-                            class="block w-full px-3 py-2.5 bg-[#F5F7FA] border border-[#E1E7EE] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] transition-colors appearance-none"
+                            class="block w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] transition-all cursor-pointer"
                         >
                             <option value="Active">Aktif</option>
                             <option value="Inactive">Tidak Aktif</option>
                         </select>
-                        <p class="mt-1.5 text-xs text-[#697586]">Semester aktif akan dijadikan acuan utama untuk pencatatan insiden.</p>
-                        <p v-if="form.errors.status" class="mt-1.5 text-xs font-medium text-[#B42318]">{{ form.errors.status }}</p>
+                        <p class="mt-1 text-xs text-gray-500">Semester aktif akan dijadikan acuan utama untuk pencatatan insiden.</p>
+                        <p v-if="form.errors.status" class="mt-1 text-xs font-medium text-red-600">{{ form.errors.status }}</p>
                     </div>
 
                     <!-- Actions -->
-                    <div class="pt-6 border-t border-[#E5E9EF] flex items-center justify-end gap-3">
+                    <div class="pt-6 border-t border-gray-100 flex items-center justify-end gap-3">
                         <Link 
                             href="/semesters"
-                            class="px-4 py-2 text-sm font-medium text-[#697586] hover:text-[#202B3C] bg-white border border-[#E5E9EF] hover:bg-[#F7F8FA] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E5E9EF]"
+                            class="px-5 py-2.5 text-xs font-semibold text-gray-700 hover:text-gray-900 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300"
                         >
                             Batal
                         </Link>
                         <button 
                             type="submit"
                             :disabled="form.processing"
-                            class="px-4 py-2 text-sm font-medium text-white bg-[#1D3557] hover:bg-[#0D1B2A] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D3557] disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center"
+                            class="px-6 py-2.5 text-xs font-semibold text-white bg-[#6366F1] hover:bg-[#4F46E5] rounded-full transition-all shadow-[0_4px_14px_#6366F140] focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed inline-flex items-center"
                         >
                             <svg v-if="form.processing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

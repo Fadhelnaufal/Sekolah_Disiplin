@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'SMA Negeri 1 Disiplin',
                 'address' => 'Jl. Pendidikan No. 1',
                 'city' => 'Jakarta',
-                'application_name' => 'Disiplin Pro'
+                'application_name' => 'Sekolah Disiplin',
             ]
         );
 
@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
             [
                 'start_date' => '2026-07-15',
                 'end_date' => '2027-06-15',
-                'status' => 'active'
+                'status' => 'active',
             ]
         );
 
@@ -61,7 +61,7 @@ class DatabaseSeeder extends Seeder
             [
                 'start_date' => '2026-07-15',
                 'end_date' => '2026-12-15',
-                'status' => 'active'
+                'status' => 'active',
             ]
         );
 
@@ -108,7 +108,7 @@ class DatabaseSeeder extends Seeder
                 'employee_number' => '198001012005011001',
                 'name' => 'Budi Santoso, S.Pd',
                 'phone' => '081234567890',
-                'status' => 'active'
+                'status' => 'active',
             ]
         );
 
@@ -117,7 +117,7 @@ class DatabaseSeeder extends Seeder
             [
                 'grade_level' => '10',
                 'homeroom_teacher_id' => $teacher->id,
-                'status' => 'active'
+                'status' => 'active',
             ]
         );
 
@@ -134,7 +134,7 @@ class DatabaseSeeder extends Seeder
                 [
                     'name' => $studentData['name'],
                     'class_room_id' => $classRoom->id,
-                    'status' => 'Active'
+                    'status' => 'Active',
                 ]
             );
         }

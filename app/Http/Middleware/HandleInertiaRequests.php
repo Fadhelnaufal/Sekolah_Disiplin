@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AcademicYear;
+use App\Models\School;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -44,7 +46,13 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
-            ]
+            ],
+            'school' => [
+                'name' => rescue(fn () => School::value('name'), 'SMP Malang', false) ?: 'SMP Malang',
+                'academic_year' => rescue(fn () => AcademicYear::whereIn('status', ['Active', 'active'])->value('name'), '2026/2027', false) ?: '2026/2027',
+                'application_name' => rescue(fn () => School::value('application_name'), 'Sekolah Disiplin', false) ?: 'Sekolah Disiplin',
+                'logo_path' => rescue(fn () => School::value('logo_path'), null, false),
+            ],
         ];
     }
 }

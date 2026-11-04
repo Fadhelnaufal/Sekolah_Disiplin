@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Student;
-use App\Models\Semester;
 use App\Models\SanctionRule;
+use App\Models\Semester;
+use App\Models\Student;
 
 class SanctionEngineService
 {
@@ -23,7 +23,7 @@ class SanctionEngineService
             ->where('min_points', '<=', $netPoints)
             ->where(function ($query) use ($netPoints) {
                 $query->whereNull('max_points')
-                      ->orWhere('max_points', '>=', $netPoints);
+                    ->orWhere('max_points', '>=', $netPoints);
             })
             ->orderByDesc('level')
             ->first();

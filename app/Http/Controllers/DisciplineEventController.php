@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DisciplineEvent;
-use App\Models\Student;
-use App\Models\Violation;
 use App\Models\Achievement;
+use App\Models\DisciplineEvent;
 use App\Models\Semester;
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\Violation;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class DisciplineEventController extends Controller
 {
@@ -18,8 +21,8 @@ class DisciplineEventController extends Controller
         $query = DisciplineEvent::with(['student.classRoom', 'violation', 'achievement', 'recordedBy', 'semester']);
 
         $user = auth()->user();
-        if ($user && $user->hasRole('Teacher') && !$user->hasRole('Super Admin') && !$user->hasRole('Tata Tertib') && !$user->hasRole('BK')) {
-            $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
+        if ($user && $user->hasRole('Teacher') && ! $user->hasAnyRole(['Super Admin', 'Tata Tertib', 'BK', 'Principal'])) {
+            $teacher = Teacher::where('user_id', $user->id)->first();
             if ($teacher) {
                 $classIds = $teacher->homeroomClasses()->pluck('id');
                 $query->whereHas('student', function ($q) use ($classIds) {
@@ -34,7 +37,7 @@ class DisciplineEventController extends Controller
             $search = $request->input('search');
             $query->whereHas('student', function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('nis', 'ilike', "%{$search}%");
+                    ->orWhere('nis', 'ilike', "%{$search}%");
             });
         }
 
@@ -43,9 +46,9 @@ class DisciplineEventController extends Controller
         }
 
         $events = $query->orderBy('event_date', 'desc')
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(15)
-                        ->withQueryString();
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         return Inertia::render('DisciplineEvents/Index', [
             'events' => $events,
@@ -57,31 +60,38 @@ class DisciplineEventController extends Controller
     {
         // Require active semester
         $activeSemester = Semester::whereIn('status', ['Active', 'aktif', 'Aktif'])->first();
-        if (!$activeSemester) {
+        if (! $activeSemester) {
             return redirect()->route('discipline-events.index')->with('error', 'Tidak ada semester aktif. Harap atur semester aktif terlebih dahulu.');
         }
 
         $studentsQuery = Student::with('classRoom')->whereIn('status', ['Active', 'aktif', 'Aktif']);
-        
+
         // Removed teacher homeroom restriction for dropdown so all teachers can report any student
-        
-        $students = $studentsQuery->orderBy('name')->get(['id', 'name', 'nis', 'class_room_id']);
+
+        $students = $studentsQuery->orderBy('name')->get(['id', 'name', 'nis', 'class_room_id', 'parent_name', 'parent_phone']);
         $violations = Violation::orderBy('code')->get(['id', 'code', 'name', 'points']);
         $achievements = Achievement::orderBy('code')->get(['id', 'code', 'name', 'deduction_points as points']);
+
+        $recentEvents = DisciplineEvent::with(['student.classRoom', 'violation', 'achievement', 'recordedBy'])
+            ->latest('event_date')
+            ->latest('created_at')
+            ->take(8)
+            ->get();
 
         return Inertia::render('DisciplineEvents/Create', [
             'students' => $students,
             'violations' => $violations,
             'achievements' => $achievements,
             'activeSemester' => $activeSemester,
-            'defaultStudentId' => $request->student_id ?? ''
+            'defaultStudentId' => $request->student_id ?? '',
+            'recentEvents' => $recentEvents,
         ]);
     }
 
     public function store(Request $request)
     {
         $activeSemester = Semester::whereIn('status', ['Active', 'aktif', 'Aktif'])->first();
-        if (!$activeSemester) {
+        if (! $activeSemester) {
             return back()->with('error', 'Tidak ada semester aktif.');
         }
 
@@ -93,12 +103,13 @@ class DisciplineEventController extends Controller
             'achievement_id' => 'required_if:event_type,achievement|nullable|exists:achievements,id',
             'description' => 'nullable|string',
             'follow_up' => 'nullable|string',
+            'original_recorder_name' => 'nullable|string|max:255',
         ]);
 
         $user = auth()->user();
-        if ($user && $user->hasRole('Teacher') && !$user->hasRole('Super Admin') && !$user->hasRole('Tata Tertib')) {
-            $teacher = \App\Models\Teacher::where('user_id', $user->id)->first();
-            if (!$teacher) {
+        if ($user && $user->hasRole('Teacher') && ! $user->hasAnyRole(['Super Admin', 'Tata Tertib', 'BK', 'Principal'])) {
+            $teacher = Teacher::where('user_id', $user->id)->first();
+            if (! $teacher) {
                 abort(403, 'Akses ditolak: Anda belum terdaftar sebagai Guru.');
             }
             // Removed homeroom check. All teachers can record events.
@@ -119,14 +130,15 @@ class DisciplineEventController extends Controller
         $validated['semester_id'] = $activeSemester->id;
         $validated['points_effect'] = $points; // Never trust user input, overwrite from DB.
         $validated['recorded_by'] = Auth::id();
+        $validated['original_recorder_name'] = $validated['original_recorder_name'] ?? (Auth::user()?->name ?? 'Petugas');
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($validated) {
             $event = DisciplineEvent::create($validated);
             $type = $event->event_type === 'violation' ? 'pelanggaran' : 'prestasi';
-            \App\Services\AuditService::logCreated($event, "Mencatat {$type} siswa");
+            AuditService::logCreated($event, "Mencatat {$type} siswa");
         });
 
-        return redirect()->route('discipline-events.index')->with('success', 'Catatan ' . ($validated['event_type'] === 'violation' ? 'pelanggaran' : 'prestasi') . ' berhasil disimpan.');
+        return redirect()->route('discipline-events.index')->with('success', 'Catatan '.($validated['event_type'] === 'violation' ? 'pelanggaran' : 'prestasi').' berhasil disimpan.');
     }
 
     public function destroy(DisciplineEvent $disciplineEvent)
@@ -136,8 +148,8 @@ class DisciplineEventController extends Controller
         }
 
         $type = $disciplineEvent->event_type === 'violation' ? 'pelanggaran' : 'prestasi';
-        \App\Services\AuditService::logDeleted($disciplineEvent, "Menghapus catatan {$type} siswa");
-        
+        AuditService::logDeleted($disciplineEvent, "Menghapus catatan {$type} siswa");
+
         $disciplineEvent->delete();
 
         return redirect()->route('discipline-events.index')->with('success', 'Catatan berhasil dihapus.');

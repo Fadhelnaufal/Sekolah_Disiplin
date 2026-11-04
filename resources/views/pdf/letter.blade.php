@@ -2,165 +2,233 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Surat Pemanggilan</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12pt;
-            line-height: 1.5;
-            margin: 0;
-            padding: 0;
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid black;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .school-name {
-            font-size: 16pt;
-            font-weight: bold;
-            margin: 0;
-        }
-        .school-address {
-            font-size: 10pt;
-            margin: 0;
-        }
-        .content {
-            margin-top: 20px;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .letter-number {
-            margin-bottom: 20px;
-        }
-        .table-info {
-            width: 100%;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        .table-info td {
-            vertical-align: top;
-            padding: 2px 0;
-        }
-        .table-info td:first-child {
-            width: 150px;
-        }
-        .table-history {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-        .table-history th, .table-history td {
-            border: 1px solid black;
-            padding: 5px 10px;
-            text-align: left;
-        }
-        .table-history th {
-            background-color: #f2f2f2;
-        }
-        .signature-area {
-            margin-top: 50px;
-            width: 100%;
-        }
-        .signature-area td {
-            width: 50%;
-            text-align: center;
-        }
-        .signature-name {
-            margin-top: 80px;
-            font-weight: bold;
-            text-decoration: underline;
-        }
-    </style>
+    <title>{{ $document_title ?? ($subject ?? 'Surat Pemanggilan') }}</title>
+    @include('pdf.partials.styles')
 </head>
 <body>
 
-<div class="header">
-    <p class="school-name">{{ $school->name }}</p>
-    <p class="school-address">{{ $school->address }}, {{ $school->city }}</p>
-    @if($school->phone)
-        <p class="school-address">Telp: {{ $school->phone }}</p>
-    @endif
-</div>
+    @include('pdf.partials.kop', ['school' => $school])
 
-<div class="content">
-    <div class="letter-number">
-        Nomor: {{ $letter_number ?? '..... / TATIB / 2026/2027' }}<br>
-        Perihal: Pemberitahuan / Pemanggilan<br>
-    </div>
+    @php
+        $isCallLetter = in_array($type ?? '', ['call_1', 'call_2', 'call_3', 'parent_call', 'call_general']) || ($canonical_type ?? '') === 'parent_call';
+    @endphp
 
-    <div class="recipient">
-        Kepada Yth.<br>
-        Bapak/Ibu Orang Tua / Wali dari:<br>
-        <table class="table-info">
+    @if($isCallLetter)
+        <!-- Format Dinas Resmi Pemanggilan Orang Tua (Sesuai Standar Tata Naskah Dinas Sekolah) -->
+        <table style="width: 100%; margin-bottom: 14px; border-collapse: collapse;">
             <tr>
-                <td>Nama Siswa</td>
-                <td>: {{ $student->name }}</td>
-            </tr>
-            <tr>
-                <td>NIS / Kelas</td>
-                <td>: {{ $student->nis }} / {{ $student->classRoom ? $student->classRoom->name : '-' }}</td>
-            </tr>
-            <tr>
-                <td>Wali Kelas</td>
-                <td>: {{ $student->classRoom && $student->classRoom->homeroomTeacher ? $student->classRoom->homeroomTeacher->name : '-' }}</td>
+                <td style="width: 60%; vertical-align: top;">
+                    <table style="border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 60px; vertical-align: top; font-size: 10.5pt;">Nomor</td>
+                            <td style="width: 15px; vertical-align: top; font-size: 10.5pt;">:</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">{{ $letter_number ?? (($school->classification_code ?? '421.3') . ' / _____ / ' . ($school->school_code ?? 'DP') . ' / ' . date('Y')) }}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top; font-size: 10.5pt;">Lamp.</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">-</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top; font-size: 10.5pt;">Hal</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;"><strong>{{ $subject ?? 'Pemanggilan Orang Tua' }}</strong></td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 40%; vertical-align: top; text-align: right; font-size: 10.5pt;">
+                    {{ $school->letter_city ?? ($school->city ?? 'Ponorogo') }}, {{ $date ?? date('d F Y') }}
+                </td>
             </tr>
         </table>
-    </div>
 
-    <p>Dengan hormat,</p>
-    <p>
-        Bersama surat ini kami sampaikan bahwa berdasarkan catatan tata tertib sekolah, ananda tersebut di atas saat ini memiliki poin ketidakdisiplinan/pelanggaran bersih sebesar <strong>{{ $net_points }} poin</strong>.
-        @if($type === 'call_3')
-            Oleh karena itu, ananda telah mencapai batas untuk <strong>Panggilan III / Terakhir</strong>. Kami mengharap kehadiran Bapak/Ibu untuk membahas tindak lanjut evaluasi kedisiplinan sesuai dengan prosedur dan tata tertib sekolah yang berlaku.
-        @elseif($sanction)
-            Oleh karena itu, ananda termasuk dalam tingkat {{ $sanction->level }} dengan tindakan: <strong>{{ $sanction->action }}</strong>.
-        @endif
-    </p>
+        <div style="margin-bottom: 14px; font-size: 10.5pt; line-height: 1.45;">
+            Kepada :<br>
+            Yth. Bapak/Ibu Wali Murid dari <strong>{{ $student->name }}</strong><br>
+            Di Tempat
+        </div>
 
-    <p>Sebagai bahan pertimbangan, berikut adalah rincian catatan disiplin terbaru:</p>
+        <p style="margin: 0 0 8px 0; font-size: 10.5pt;">Assalamu’alaikum Wr. Wb.</p>
+        <p style="margin: 0 0 8px 0; font-size: 10.5pt; text-align: justify; line-height: 1.45;">
+            Mengharap dengan hormat atas kehadiran Bapak/Ibu wali murid dari :
+        </p>
 
-    <table class="table-history">
-        <thead>
+        <table style="width: 100%; margin-left: 15px; margin-bottom: 12px; border-collapse: collapse;">
             <tr>
-                <th>NO</th>
-                <th>TANGGAL</th>
-                <th>JENIS KEJADIAN</th>
-                <th>POIN</th>
+                <td style="width: 120px; vertical-align: top; font-size: 10.5pt;">Nama Siswa</td>
+                <td style="width: 15px; vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;"><strong>{{ $student->name }}</strong></td>
             </tr>
-        </thead>
-        <tbody>
-            @forelse($recent_events as $index => $event)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $event['date'] }}</td>
-                    <td>{{ $event['description'] }}</td>
-                    <td>{{ $event['points'] }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4" style="text-align: center;">Tidak ada catatan terbaru.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Kelas</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ $student->classRoom ? $student->classRoom->name : '-' }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">NIS / NISN</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ $student->nis ?? '-' }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Alamat</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ $student->address ?? ($student->parent_address ?? 'Tempat tinggal siswa') }}</td>
+            </tr>
+        </table>
 
-    <p>Demikian surat pemberitahuan ini kami sampaikan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.</p>
+        <p style="margin: 0 0 8px 0; font-size: 10.5pt; text-align: justify; line-height: 1.45;">
+            Untuk hadir dengan ketentuan sebagai berikut :
+        </p>
+        <table style="width: 100%; margin-left: 15px; margin-bottom: 14px; border-collapse: collapse;">
+            <tr>
+                <td style="width: 120px; vertical-align: top; font-size: 10.5pt;">Hari, tanggal</td>
+                <td style="width: 15px; vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;"><strong>{{ !empty($meeting_day_date) ? $meeting_day_date : ($date ?? '-') }}</strong></td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Waktu</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ !empty($meeting_time) ? $meeting_time : 'Pukul 09.00 WIB s/d selesai' }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Tempat</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ !empty($meeting_venue) ? $meeting_venue : 'Kantor ' . ($school->name ?? 'Sekolah') }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Keterangan</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt; text-align: justify;">
+                    Menemui {{ $signatory_title ?? 'Waka Kesiswaan dan Guru BK' }}
+                    @if(!empty($reason))
+                        <br><span style="color: #374151;">({{ $reason }})</span>
+                    @endif
+                </td>
+            </tr>
+            @if(!empty($contact_person))
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Konfirmasi</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ $contact_person }}</td>
+            </tr>
+            @endif
+        </table>
 
-    <table class="signature-area">
-        <tr>
-            <td></td>
-            <td>
-                {{ $school->city }}, {{ $date }}<br>
-                {{ $signatory_title ?? 'Kepala Sekolah' }}
-                <div class="signature-name">{{ $signatory_name ?? '.......................' }}</div>
-            </td>
-        </tr>
-    </table>
-</div>
+        <p style="margin: 0 0 8px 0; font-size: 10.5pt; text-align: justify; line-height: 1.45;">
+            Demikian surat ini disampaikan, atas perhatian dan kehadirannya kami ucapkan terima kasih.
+        </p>
+        <p style="margin: 0 0 16px 0; font-size: 10.5pt;">Wassalamu’alaikum Wr. Wb.</p>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; page-break-inside: avoid;">
+            <tr>
+                <td style="width: 55%;"></td>
+                <td style="width: 45%; text-align: center; vertical-align: top; font-size: 10.5pt; line-height: 1.35;">
+                    @php
+                        $titleLower = strtolower($signatory_title ?? '');
+                        $isKepsek = str_contains($titleLower, 'kepala sekolah') && !str_contains($titleLower, 'wakil') && !str_contains($titleLower, 'waka');
+                    @endphp
+                    @if(!$isKepsek)
+                        a.n. Kepala Sekolah<br>
+                    @endif
+                    {{ $signatory_title ?? 'Waka Kesiswaan' }},
+
+                    @if(($school->show_signature_image ?? false) && !empty($school->signature_path))
+                        <div style="margin: 5px 0;">
+                            <img src="{{ public_path($school->signature_path) }}" alt="Tanda Tangan" style="max-height: 50px; max-width: 140px;">
+                        </div>
+                    @else
+                        <br><br><br><br>
+                    @endif
+
+                    <strong><u>{{ $signatory_name ?? ($school->principal_name ?? '.......................') }}</u></strong>
+                    @if(!empty($school->principal_nip) && $isKepsek)
+                        <div style="font-size: 9pt; color: #4B5563; margin-top: 2px;">NIP. {{ $school->principal_nip }}</div>
+                    @endif
+                </td>
+            </tr>
+        </table>
+
+    @else
+        <!-- Format Surat Pemberitahuan Perkembangan Kedisiplinan -->
+        <table style="width: 100%; margin-bottom: 14px; border-collapse: collapse;">
+            <tr>
+                <td style="width: 60%; vertical-align: top;">
+                    <table style="border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 60px; vertical-align: top; font-size: 10.5pt;">Nomor</td>
+                            <td style="width: 15px; vertical-align: top; font-size: 10.5pt;">:</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">{{ $letter_number ?? '..... / TATIB / ' . date('Y') }}</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top; font-size: 10.5pt;">Lamp.</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">-</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top; font-size: 10.5pt;">Hal</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                            <td style="vertical-align: top; font-size: 10.5pt;"><strong>{{ $subject ?? 'Pemberitahuan Perkembangan Kedisiplinan' }}</strong></td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 40%; vertical-align: top; text-align: right; font-size: 10.5pt;">
+                    {{ $school->letter_city ?? ($school->city ?? 'Ponorogo') }}, {{ $date ?? date('d F Y') }}
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-bottom: 14px; font-size: 10.5pt; line-height: 1.45;">
+            Kepada :<br>
+            Yth. Bapak/Ibu Orang Tua / Wali dari <strong>{{ $student->name }}</strong><br>
+            Di <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ $student->address ?? 'Tempat' }}
+        </div>
+
+        <p style="margin: 0 0 8px 0; font-size: 10.5pt;">Dengan hormat,</p>
+        <p style="margin: 0 0 8px 0; font-size: 10.5pt; text-align: justify; line-height: 1.45;">
+            Sehubungan dengan proses pembinaan dan pemantauan tata tertib peserta didik di sekolah, kami menyampaikan rincian perkembangan kedisiplinan atas peserta didik:
+        </p>
+
+        <table style="width: 100%; margin-left: 15px; margin-bottom: 12px; border-collapse: collapse;">
+            <tr>
+                <td style="width: 120px; vertical-align: top; font-size: 10.5pt;">Nama Siswa</td>
+                <td style="width: 15px; vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;"><strong>{{ $student->name }}</strong></td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Kelas</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ $student->classRoom ? $student->classRoom->name : '-' }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">NIS</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt;">{{ $student->nis }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; font-size: 10.5pt;">Total Poin Bersih</td>
+                <td style="vertical-align: top; font-size: 10.5pt;">:</td>
+                <td style="font-size: 10.5pt; font-weight: bold; color: #B42318;">{{ $net_points ?? 0 }} Poin</td>
+            </tr>
+        </table>
+
+        @if(!empty($notes))
+            <p style="margin: 0 0 8px 0; font-size: 10.5pt; text-align: justify; line-height: 1.45;">
+                <strong>Catatan Sekolah:</strong> {{ $notes }}
+            </p>
+        @endif
+
+        <p style="margin: 12px 0 8px 0; font-size: 10.5pt; text-align: justify; line-height: 1.45;">
+            Demikian surat pemberitahuan ini kami sampaikan agar menjadi perhatian bersama demi pembinaan karakter ananda. Atas kerja sama Bapak/Ibu, kami ucapkan terima kasih.
+        </p>
+
+        @include('pdf.partials.signatory', [
+            'school' => $school,
+            'signatory_title' => $signatory_title ?? null,
+            'signatory_name' => $signatory_name ?? null,
+            'date_string' => $date ?? null,
+        ])
+    @endif
 
 </body>
 </html>

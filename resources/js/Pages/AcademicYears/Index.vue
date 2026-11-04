@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Swal from 'sweetalert2';
 import { ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { useConfirm } from 'primevue/useconfirm';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps<{
@@ -20,6 +20,7 @@ const props = defineProps<{
     };
 }>();
 
+const confirm = useConfirm();
 const search = ref(props.filters.search || '');
 
 function debounce(fn: Function, delay: number) {
@@ -35,17 +36,12 @@ watch(search, debounce((value: string) => {
 }, 300));
 
 const deleteAcademicYear = (id: number) => {
-    Swal.fire({
-        title: 'Konfirmasi Tindakan',
-        text: 'Apakah Anda yakin ingin menghapus data tahun ajaran ini?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#B42318',
-        cancelButtonColor: '#697586',
-        confirmButtonText: 'Ya, Lanjutkan',
-        cancelButtonText: 'Batal'
-    }).then((result) => {
-        if (result.isConfirmed) {
+    confirm.require({
+        message: 'Apakah Anda yakin ingin menghapus data tahun ajaran ini?',
+        header: 'Konfirmasi Hapus Tahun Ajaran',
+        icon: 'pi pi-exclamation-triangle',
+        acceptProps: { severity: 'danger' },
+        accept: () => {
             router.delete(`/academic-years/${id}`);
         }
     });
@@ -53,97 +49,100 @@ const deleteAcademicYear = (id: number) => {
 
 const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }).format(d);
+    return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
 };
 </script>
 
 <template>
-    <Head title="Tahun Ajaran - Disiplin Pro" />
+    <Head title="Tahun Ajaran - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full pr-4">
-                <span class="text-[#697586] text-sm">Pengaturan <span class="mx-1">/</span> <span class="text-[#202B3C] font-semibold">Tahun Ajaran</span></span>
+            <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
+                <Link href="/settings" class="text-gray-500 hover:text-gray-900 transition-colors">Pengaturan</Link>
+                <span class="text-gray-300">/</span>
+                <span class="text-gray-900 font-semibold">Tahun Ajaran</span>
             </div>
         </template>
 
-        <div class="max-w-7xl mx-auto space-y-6">
+        <div class="max-w-[1400px] mx-auto space-y-6">
             <!-- Header Area -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-[#202B3C] tracking-tight">Tahun Ajaran</h1>
-                    <p class="text-[#697586] mt-1 text-sm">Kelola daftar tahun ajaran dan atur tahun ajaran aktif.</p>
+                    <h1 class="text-[28px] font-bold text-gray-900 tracking-tight">Tahun Ajaran</h1>
+                    <p class="text-gray-500 text-[15px] mt-0.5">Kelola daftar tahun ajaran dan konfigurasi periode akademik aktif.</p>
                 </div>
                 <Link 
                     href="/academic-years/create" 
-                    class="inline-flex items-center justify-center bg-[#1D3557] hover:bg-[#0D1B2A] text-white text-sm font-medium py-2 px-4 rounded transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D3557]"
+                    class="px-5 py-2.5 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Tahun Ajaran
+                    <i class="pi pi-plus text-xs"></i>
+                    <span>Tambah Tahun Ajaran</span>
                 </Link>
             </div>
 
-            <!-- Toolbar (Search) -->
-            <div class="bg-white p-4 border border-[#E5E9EF] shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="w-full sm:max-w-md relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#697586]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+            <!-- Card Container -->
+            <div class="bg-white rounded-[24px] p-7 shadow-[0_2px_20px_#00000006] space-y-5">
+                <!-- Toolbar (Search) -->
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="relative w-full sm:w-80">
+                        <i class="pi pi-search absolute left-3.5 top-3 text-gray-400 text-xs"></i>
+                        <input 
+                            v-model="search"
+                            type="text" 
+                            placeholder="Cari tahun ajaran..." 
+                            class="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                        >
                     </div>
-                    <input 
-                        v-model="search"
-                        type="text" 
-                        placeholder="Cari tahun ajaran..." 
-                        class="block w-full pl-9 pr-3 py-2 border border-[#E5E9EF] text-[#182230] text-sm focus:outline-none focus:ring-1 focus:ring-[#315E8A] focus:border-[#315E8A] bg-[#F7F8FA] focus:bg-white transition-colors"
-                    >
                 </div>
-            </div>
 
-            <!-- Flash Messages -->
-            <div v-if="$page.props.flash?.success" class="bg-[#237A57]/10 border border-[#237A57]/30 text-[#237A57] px-4 py-3 rounded text-sm font-medium">
-                {{ $page.props.flash.success }}
-            </div>
-            <div v-if="$page.props.flash?.error" class="bg-[#B42318]/10 border border-[#B42318]/30 text-[#B42318] px-4 py-3 rounded text-sm font-medium">
-                {{ $page.props.flash.error }}
-            </div>
-
-            <!-- Data Table -->
-            <div class="bg-white border border-[#E5E9EF] shadow-sm overflow-hidden">
+                <!-- Data Table -->
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-[#F7F8FA] text-[#697586] font-semibold text-xs uppercase tracking-wider border-b border-[#E5E9EF]">
-                            <tr>
-                                <th class="px-5 py-3">Tahun Ajaran</th>
-                                <th class="px-5 py-3">Tanggal Mulai</th>
-                                <th class="px-5 py-3">Tanggal Selesai</th>
-                                <th class="px-5 py-3 w-32 text-center">Status</th>
-                                <th class="px-5 py-3 w-32 text-right">Aksi</th>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                <th class="pb-3 text-left">Tahun Ajaran</th>
+                                <th class="pb-3 text-left">Tanggal Mulai</th>
+                                <th class="pb-3 text-left">Tanggal Selesai</th>
+                                <th class="pb-3 w-28 text-center">Status</th>
+                                <th class="pb-3 w-32 text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[#E5E9EF]">
-                            <tr v-for="ay in academicYears.data" :key="ay.id" class="hover:bg-[#F7F8FA]/80 transition-colors">
-                                <td class="px-5 py-3 text-[#202B3C] font-bold">{{ ay.name }}</td>
-                                <td class="px-5 py-3 text-[#697586]">{{ formatDate(ay.start_date) }}</td>
-                                <td class="px-5 py-3 text-[#697586]">{{ formatDate(ay.end_date) }}</td>
-                                <td class="px-5 py-3 text-center">
+                        <tbody class="divide-y divide-gray-50 text-sm">
+                            <tr v-for="ay in academicYears.data" :key="ay.id" class="hover:bg-gray-50/60 transition-colors">
+                                <td class="py-4 text-gray-900 font-bold">{{ ay.name }}</td>
+                                <td class="py-4 text-xs text-gray-600">{{ formatDate(ay.start_date) }}</td>
+                                <td class="py-4 text-xs text-gray-600">{{ formatDate(ay.end_date) }}</td>
+                                <td class="py-4 text-center">
                                     <span 
-                                        class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded"
-                                        :class="(ay.status.toLowerCase() === 'active' || ay.status.toLowerCase() === 'aktif') ? 'bg-[#237A57]/10 text-[#237A57]' : 'bg-[#697586]/10 text-[#697586]'"
+                                        class="inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider"
+                                        :class="(ay.status.toLowerCase() === 'active' || ay.status.toLowerCase() === 'aktif') ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'"
                                     >
                                         {{ ay.status === 'Active' ? 'Aktif' : 'Tidak Aktif' }}
                                     </span>
                                 </td>
-                                <td class="px-5 py-3 text-right space-x-3">
-                                    <Link :href="`/academic-years/${ay.id}/edit`" class="text-[#315E8A] hover:text-[#1D3557] font-medium transition-colors">Edit</Link>
-                                    <button @click="deleteAcademicYear(ay.id)" class="text-[#B42318] hover:text-red-800 font-medium transition-colors">Hapus</button>
+                                <td class="py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        <Link
+                                            :href="`/academic-years/${ay.id}/edit`"
+                                            class="w-7 h-7 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-[#6366F1] text-gray-600 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+                                            title="Edit Tahun Ajaran"
+                                        >
+                                            <i class="pi pi-pencil text-[11px]"></i>
+                                        </Link>
+                                        <button
+                                            @click="deleteAcademicYear(ay.id)"
+                                            class="w-7 h-7 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40"
+                                            title="Hapus Tahun Ajaran"
+                                        >
+                                            <i class="pi pi-trash text-[11px]"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="academicYears.data.length === 0">
-                                <td colspan="5" class="px-5 py-10 text-center text-[#697586]">
-                                    <p class="text-sm font-medium">Tidak ada data tahun ajaran ditemukan.</p>
+                                <td colspan="5" class="py-12 text-center text-gray-500 text-xs">
+                                    Tidak ada data tahun ajaran ditemukan.
                                 </td>
                             </tr>
                         </tbody>
@@ -151,24 +150,21 @@ const formatDate = (dateStr: string) => {
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="academicYears.links.length > 3" class="px-5 py-4 border-t border-[#E5E9EF] flex items-center justify-between">
-                    <div class="flex items-center space-x-1">
-                        <Link 
-                            v-for="(link, index) in academicYears.links" 
-                            :key="index"
-                            :href="link.url || '#'"
-                            class="px-3 py-1 text-sm border rounded transition-colors"
-                            :class="[
-                                link.active ? 'bg-[#1D3557] text-white border-[#1D3557]' : 'text-[#697586] border-[#E5E9EF] hover:bg-[#F7F8FA]',
-                                !link.url && 'opacity-50 cursor-not-allowed hover:bg-white'
-                            ]"
-                            v-html="link.label"
-                            preserve-scroll
-                        />
-                    </div>
+                <div v-if="academicYears.links.length > 3" class="pt-4 border-t border-gray-100 flex items-center justify-center gap-1">
+                    <Link 
+                        v-for="(link, index) in academicYears.links" 
+                        :key="index"
+                        :href="link.url || '#'"
+                        class="min-w-[32px] h-8 flex items-center justify-center px-2 text-[13px] font-medium rounded-lg transition-colors"
+                        :class="[
+                            link.active ? 'bg-[#6366F1] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
+                            !link.url && 'opacity-40 cursor-not-allowed hover:bg-transparent'
+                        ]"
+                        v-html="link.label"
+                        preserve-scroll
+                    />
                 </div>
             </div>
-
         </div>
     </AuthenticatedLayout>
 </template>

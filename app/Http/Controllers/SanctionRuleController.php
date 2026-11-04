@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SanctionRule;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -10,21 +11,7 @@ class SanctionRuleController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SanctionRule::query();
-
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('level', 'ilike', "%{$search}%")
-                  ->orWhere('action', 'ilike', "%{$search}%")
-                  ->orWhere('executor', 'ilike', "%{$search}%");
-        }
-
-        $sanctionRules = $query->orderBy('min_points', 'asc')->paginate(15)->withQueryString();
-
-        return Inertia::render('SanctionRules/Index', [
-            'sanctionRules' => $sanctionRules,
-            'filters' => $request->only('search'),
-        ]);
+        return redirect()->route('master-data.index', ['tab' => 'sanctions']);
     }
 
     public function create()
@@ -47,15 +34,15 @@ class SanctionRuleController extends Controller
         $validated['is_active'] = $validated['is_active'] ?? true;
 
         $sanctionRule = SanctionRule::create($validated);
-        \App\Services\AuditService::logCreated($sanctionRule, 'Menambahkan aturan sanksi: ' . $sanctionRule->sanction_name);
+        AuditService::logCreated($sanctionRule, 'Menambahkan aturan sanksi: '.$sanctionRule->sanction_name);
 
-        return redirect()->route('sanction-rules.index')->with('success', 'Aturan sanksi berhasil ditambahkan.');
+        return redirect()->route('master-data.index', ['tab' => 'sanctions'])->with('success', 'Aturan sanksi berhasil ditambahkan.');
     }
 
     public function edit(SanctionRule $sanctionRule)
     {
         return Inertia::render('SanctionRules/Form', [
-            'sanctionRule' => $sanctionRule
+            'sanctionRule' => $sanctionRule,
         ]);
     }
 
@@ -73,13 +60,13 @@ class SanctionRuleController extends Controller
 
         $sanctionRule->update($validated);
 
-        return redirect()->route('sanction-rules.index')->with('success', 'Aturan sanksi berhasil diperbarui.');
+        return redirect()->route('master-data.index', ['tab' => 'sanctions'])->with('success', 'Aturan sanksi berhasil diperbarui.');
     }
 
     public function destroy(SanctionRule $sanctionRule)
     {
         $sanctionRule->delete();
 
-        return redirect()->route('sanction-rules.index')->with('success', 'Aturan sanksi berhasil dihapus.');
+        return redirect()->route('master-data.index', ['tab' => 'sanctions'])->with('success', 'Aturan sanksi berhasil dihapus.');
     }
 }

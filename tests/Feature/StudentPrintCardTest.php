@@ -21,18 +21,18 @@ class StudentPrintCardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->artisan('db:seed');
-        
+
         $this->school = School::first();
         $this->academicYear = AcademicYear::first();
-        
+
         $this->activeSemester = Semester::create([
             'academic_year_id' => $this->academicYear->id,
             'name' => 'Active Semester',
             'start_date' => '2026-01-01',
             'end_date' => '2026-06-30',
-            'status' => 'Active'
+            'status' => 'Active',
         ]);
 
         $this->closedSemester = Semester::create([
@@ -40,14 +40,14 @@ class StudentPrintCardTest extends TestCase
             'name' => 'Closed Semester',
             'start_date' => '2025-07-01',
             'end_date' => '2025-12-31',
-            'status' => 'Closed'
+            'status' => 'Closed',
         ]);
 
         $this->classRoom = ClassRoom::create([
             'school_id' => $this->school->id,
             'academic_year_id' => $this->academicYear->id,
             'name' => '7A',
-            'grade_level' => '7'
+            'grade_level' => '7',
         ]);
 
         $this->student = Student::create([
@@ -55,14 +55,14 @@ class StudentPrintCardTest extends TestCase
             'class_room_id' => $this->classRoom->id,
             'nis' => '111',
             'name' => 'Test Student',
-            'status' => 'Active'
+            'status' => 'Active',
         ]);
 
         $this->violation = Violation::create([
             'code' => 'V1',
             'name' => 'Viol',
             'category' => 'Cat',
-            'points' => 15
+            'points' => 15,
         ]);
 
         $this->adminUser = User::factory()->create();
@@ -81,7 +81,7 @@ class StudentPrintCardTest extends TestCase
     {
         // No roles assigned
         $unauthorizedUser = User::factory()->create();
-        
+
         $response = $this->actingAs($unauthorizedUser)
             ->get(route('students.print-card', $this->student->id));
 
@@ -98,17 +98,17 @@ class StudentPrintCardTest extends TestCase
             'violation_id' => $this->violation->id,
             'points_effect' => 15,
             'description' => 'Test event',
-            'recorded_by' => $this->adminUser->id
+            'recorded_by' => $this->adminUser->id,
         ]);
 
         $response = $this->actingAs($this->adminUser)
             ->get(route('students.print-card', [
                 'student' => $this->student->id,
-                'semester_id' => $this->activeSemester->id
+                'semester_id' => $this->activeSemester->id,
             ]));
 
         $response->assertStatus(200);
-        
+
         // Assert inertia props have live calculation
         $response->assertInertia(fn ($page) => $page
             ->where('summary.violation_points', 15)
@@ -133,11 +133,11 @@ class StudentPrintCardTest extends TestCase
         $response = $this->actingAs($this->adminUser)
             ->get(route('students.print-card', [
                 'student' => $this->student->id,
-                'semester_id' => $this->closedSemester->id
+                'semester_id' => $this->closedSemester->id,
             ]));
 
         $response->assertStatus(200);
-        
+
         // Should fetch the snapshot 50, not the live 0
         $response->assertInertia(fn ($page) => $page
             ->where('summary.violation_points', 50)
@@ -152,7 +152,7 @@ class StudentPrintCardTest extends TestCase
         $response = $this->actingAs($this->adminUser)
             ->get(route('students.print-card', [
                 'student' => $this->student->id,
-                'semester_id' => $this->closedSemester->id
+                'semester_id' => $this->closedSemester->id,
             ]));
 
         $response->assertStatus(404);

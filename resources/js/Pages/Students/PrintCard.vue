@@ -23,6 +23,14 @@ const formatDate = (dateStr: string) => {
     return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }).format(d);
 };
 
+const goBack = () => {
+    window.history.back();
+};
+
+const printDoc = () => {
+    window.print();
+};
+
 // Automatically open print dialog
 onMounted(() => {
     // Small delay to ensure styles are loaded
@@ -38,11 +46,19 @@ onMounted(() => {
     <div class="print-container max-w-[210mm] mx-auto bg-white min-h-[297mm] p-8 text-black font-serif">
         
         <!-- Action Buttons (Hidden in Print) -->
-        <div class="print:hidden mb-6 flex justify-end space-x-4 border-b pb-4">
-            <button onclick="window.history.back()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition text-sm font-sans">
+        <div class="print:hidden mb-6 flex justify-end space-x-3 border-b border-gray-100 pb-4 font-sans">
+            <button
+                type="button"
+                @click="goBack"
+                class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-gray-300"
+            >
                 Kembali
             </button>
-            <button onclick="window.print()" class="px-4 py-2 bg-[#1D3557] text-white rounded hover:bg-[#0D1B2A] transition text-sm font-sans">
+            <button
+                type="button"
+                @click="printDoc"
+                class="px-5 py-2.5 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-full transition-all text-sm font-semibold shadow-[0_4px_14px_#6366F140] focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+            >
                 Cetak Dokumen (A4)
             </button>
         </div>

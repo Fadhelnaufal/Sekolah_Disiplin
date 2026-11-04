@@ -10,8 +10,8 @@ class Achievement extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code', 'name', 'level', 'deduction_points', 
-        'description', 'frequency_rule', 'is_active'
+        'code', 'name', 'level', 'deduction_points',
+        'description', 'frequency_rule', 'is_active',
     ];
 
     protected $casts = [

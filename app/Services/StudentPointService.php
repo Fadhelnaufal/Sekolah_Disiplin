@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Student;
 use App\Models\Semester;
+use App\Models\Student;
 use Carbon\CarbonPeriod;
 
 class StudentPointService
@@ -27,6 +27,7 @@ class StudentPointService
     public function getNetPoints(Student $student, Semester $semester): int
     {
         $net = $this->getViolationPoints($student, $semester) - $this->getAchievementPoints($student, $semester);
+
         return max(0, $net);
     }
 

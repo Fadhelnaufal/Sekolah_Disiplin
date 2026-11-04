@@ -11,8 +11,8 @@ class Student extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'school_id', 'nis', 'name', 'class_room_id', 
-        'parent_name', 'parent_phone', 'status', 'notes'
+        'school_id', 'nis', 'name', 'class_room_id',
+        'parent_name', 'parent_phone', 'status', 'notes',
     ];
 
     public function school()
@@ -38,5 +38,10 @@ class Student extends Model
     public function letters()
     {
         return $this->hasMany(Letter::class);
+    }
+
+    public function followUps()
+    {
+        return $this->hasMany(FollowUp::class);
     }
 }

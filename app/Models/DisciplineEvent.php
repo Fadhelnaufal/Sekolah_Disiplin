@@ -11,9 +11,9 @@ class DisciplineEvent extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'semester_id', 'student_id', 'event_date', 'event_type', 
-        'violation_id', 'achievement_id', 'points_effect', 
-        'description', 'recorded_by', 'original_recorder_name', 'follow_up'
+        'semester_id', 'student_id', 'event_date', 'event_type',
+        'violation_id', 'achievement_id', 'points_effect',
+        'description', 'recorded_by', 'original_recorder_name', 'follow_up',
     ];
 
     protected $casts = [

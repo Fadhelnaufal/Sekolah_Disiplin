@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import Swal from 'sweetalert2';
-import { ref, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, watch, computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import { buildDisciplineEventWhatsAppMessage, buildWhatsAppUrl } from '../../utils';
 
 const props = defineProps<{
     events: {
@@ -13,7 +14,8 @@ const props = defineProps<{
             event_date: string;
             event_type: string;
             points_effect: number;
-            student: { id: number; name: string; nis: string; class_room?: { name: string } } | null;
+            description?: string;
+            student: { id: number; name: string; nis: string; parent_name?: string; parent_phone?: string; class_room?: { name: string } } | null;
             violation: { name: string; code: string } | null;
             achievement: { name: string; code: string } | null;
             recorded_by: { name: string } | null;
@@ -29,6 +31,10 @@ const props = defineProps<{
 
 const search = ref(props.filters.search || '');
 const eventType = ref(props.filters.event_type || '');
+
+const page = usePage();
+const userRoles = computed<string[]>(() => (page.props.auth as any)?.roles || []);
+const canDelete = computed(() => userRoles.value.includes('Super Admin') || userRoles.value.includes('Tata Tertib'));
 
 function debounce(fn: Function, delay: number) {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -63,10 +69,47 @@ const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
     return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
 };
+
+const sendWhatsAppEvent = (item: any) => {
+    const student = item.student;
+    const phone = student?.parent_phone;
+    const schoolName = (usePage().props.school as any)?.name || 'Sekolah';
+    const eventName = item.event_type === 'violation' ? (item.violation?.name || 'Pelanggaran') : (item.achievement?.name || 'Prestasi');
+
+    const message = buildDisciplineEventWhatsAppMessage({
+        schoolName,
+        studentName: student?.name || 'Siswa',
+        studentNis: student?.nis,
+        className: student?.class_room?.name,
+        eventType: item.event_type,
+        eventName,
+        eventDate: formatDate(item.event_date),
+        points: item.points_effect,
+        description: item.description,
+        recorderName: item.recorded_by?.name,
+    });
+
+    if (!phone) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(message);
+        }
+        Swal.fire({
+            title: 'Nomor WA Belum Terdaftar',
+            text: 'Nomor WhatsApp orang tua belum terdaftar di profil siswa. Draf pesan resmi telah disalin ke clipboard Anda.',
+            icon: 'info',
+            confirmButtonColor: '#6366F1',
+            confirmButtonText: 'Tutup',
+        });
+        window.open(buildWhatsAppUrl('', message), '_blank');
+        return;
+    }
+
+    window.open(buildWhatsAppUrl(phone, message), '_blank');
+};
 </script>
 
 <template>
-    <Head title="Pencatatan Kedisiplinan - Disiplin Pro" />
+    <Head title="Pencatatan Kedisiplinan - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
         <div class="max-w-[1400px] mx-auto space-y-8">
@@ -81,13 +124,6 @@ const formatDate = (dateStr: string) => {
                         <i class="pi pi-plus text-xs"></i> Input Kejadian Baru
                     </Link>
                 </div>
-            </div>
-
-            <div v-if="$page.props.flash?.success" class="bg-green-50 text-green-600 px-5 py-4 rounded-[16px] text-[14px] font-medium border border-green-100 flex items-center gap-3 shadow-sm">
-                <i class="pi pi-check-circle"></i> {{ $page.props.flash.success }}
-            </div>
-            <div v-if="$page.props.flash?.error" class="bg-red-50 text-red-600 px-5 py-4 rounded-[16px] text-[14px] font-medium border border-red-100 flex items-center gap-3 shadow-sm">
-                <i class="pi pi-exclamation-circle"></i> {{ $page.props.flash.error }}
             </div>
 
             <!-- Main Card -->
@@ -176,7 +212,20 @@ const formatDate = (dateStr: string) => {
                     <Column class="text-right border-b border-gray-50 py-4 w-32">
                         <template #body="slotProps">
                             <div class="flex justify-end gap-2">
-                                <button @click="deleteEvent(slotProps.data.id)" class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none" title="Hapus">
+                                <button
+                                    type="button"
+                                    @click="sendWhatsAppEvent(slotProps.data)"
+                                    class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 hover:text-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40 cursor-pointer"
+                                    title="Kirim pemberitahuan ke WhatsApp Orang Tua"
+                                >
+                                    <i class="pi pi-whatsapp text-xs"></i>
+                                </button>
+                                <button
+                                    v-if="canDelete"
+                                    @click="deleteEvent(slotProps.data.id)"
+                                    class="w-8 h-8 rounded-full bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40 cursor-pointer"
+                                    title="Hapus"
+                                >
                                     <i class="pi pi-trash text-xs"></i>
                                 </button>
                             </div>

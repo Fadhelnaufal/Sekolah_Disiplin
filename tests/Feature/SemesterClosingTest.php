@@ -21,27 +21,27 @@ class SemesterClosingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->artisan('db:seed');
-        
+
         $this->school = School::first();
         $this->academicYear = AcademicYear::first();
-        
+
         $this->semester = Semester::create([
             'academic_year_id' => $this->academicYear->id,
             'name' => 'Ganjil 2026',
             'start_date' => '2026-07-01',
             'end_date' => '2026-12-31',
-            'status' => 'Active'
+            'status' => 'Active',
         ]);
 
         $this->classRoom = ClassRoom::create([
             'school_id' => $this->school->id,
             'academic_year_id' => $this->academicYear->id,
             'name' => '7A',
-            'grade_level' => '7'
+            'grade_level' => '7',
         ]);
-        
+
         $this->adminUser = User::factory()->create();
         $this->adminUser->assignRole('Super Admin');
     }
@@ -53,14 +53,14 @@ class SemesterClosingTest extends TestCase
             'class_room_id' => $this->classRoom->id,
             'nis' => '111',
             'name' => 'Active Student',
-            'status' => 'Active'
+            'status' => 'Active',
         ]);
 
         $violation = Violation::create([
             'code' => 'V1',
             'name' => 'Viol',
             'category' => 'Cat',
-            'points' => 15
+            'points' => 15,
         ]);
 
         DisciplineEvent::create([
@@ -71,12 +71,12 @@ class SemesterClosingTest extends TestCase
             'violation_id' => $violation->id,
             'points_effect' => 15,
             'description' => 'Test event',
-            'recorded_by' => $this->adminUser->id
+            'recorded_by' => $this->adminUser->id,
         ]);
 
         $response = $this->actingAs($this->adminUser)
             ->post(route('semesters.close', $this->semester->id));
-            
+
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
@@ -88,7 +88,7 @@ class SemesterClosingTest extends TestCase
         $snapshot = SemesterSnapshot::where('semester_id', $this->semester->id)
             ->where('student_id', $student->id)
             ->first();
-            
+
         $this->assertNotNull($snapshot);
         $this->assertEquals(15, $snapshot->violation_points);
         $this->assertEquals(0, $snapshot->achievement_points);

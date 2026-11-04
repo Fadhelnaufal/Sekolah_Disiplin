@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('counseling_records', function (Blueprint $table) {
             $table->dropColumn(['counseling_date', 'point_snapshot', 'problem_description', 'action_taken', 'result', 'evaluation_date', 'source']);
-            
+
             $table->date('date_scheduled')->nullable();
             $table->date('date_completed')->nullable();
             $table->string('category')->nullable();
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('summary')->nullable(); // will be encrypted
             $table->text('follow_up_action')->nullable(); // will be encrypted
             $table->string('confidentiality_level')->default('normal');
-            
+
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
         });
@@ -32,12 +32,12 @@ return new class extends Migration
         Schema::table('counseling_records', function (Blueprint $table) {
             $table->dropForeign(['counseling_records_created_by_foreign']);
             $table->dropForeign(['counseling_records_updated_by_foreign']);
-            
+
             $table->dropColumn([
-                'date_scheduled', 'date_completed', 'category', 'reason', 
-                'summary', 'follow_up_action', 'confidentiality_level', 'created_by', 'updated_by'
+                'date_scheduled', 'date_completed', 'category', 'reason',
+                'summary', 'follow_up_action', 'confidentiality_level', 'created_by', 'updated_by',
             ]);
-            
+
             $table->date('counseling_date')->nullable();
             $table->integer('point_snapshot')->nullable();
             $table->text('problem_description')->nullable();

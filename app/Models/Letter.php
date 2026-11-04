@@ -10,9 +10,9 @@ class Letter extends Model
     use HasFactory;
 
     protected $fillable = [
-        'student_id', 'semester_id', 'type', 'letter_number', 
-        'subject', 'generated_at', 'generated_by', 'status', 
-        'pdf_path', 'metadata'
+        'student_id', 'semester_id', 'type', 'letter_number',
+        'subject', 'generated_at', 'generated_by', 'status',
+        'pdf_path', 'metadata',
     ];
 
     protected $casts = [

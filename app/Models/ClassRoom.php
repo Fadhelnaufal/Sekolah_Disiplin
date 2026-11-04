@@ -10,8 +10,8 @@ class ClassRoom extends Model
     use HasFactory;
 
     protected $fillable = [
-        'school_id', 'academic_year_id', 'name', 'grade_level', 
-        'homeroom_teacher_id', 'status'
+        'school_id', 'academic_year_id', 'name', 'grade_level',
+        'homeroom_teacher_id', 'status',
     ];
 
     public function school()

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action'); // created, updated, deleted, closed, imported
             $table->string('subject_type')->nullable(); // e.g. App\Models\Student or "Excel Import"
-            $table->string('subject_id')->nullable(); 
+            $table->string('subject_id')->nullable();
             $table->string('description');
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClassRoom;
-use App\Models\Teacher;
 use App\Models\AcademicYear;
+use App\Models\ClassRoom;
 use App\Models\School;
+use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -32,10 +32,10 @@ class ClassRoomController extends Controller
     {
         $teachers = Teacher::whereIn('status', ['Active', 'aktif', 'Aktif'])->orderBy('name')->get(['id', 'name']);
         $academicYears = AcademicYear::orderBy('name', 'desc')->get(['id', 'name', 'status']);
-        
+
         return Inertia::render('ClassRooms/Form', [
             'teachers' => $teachers,
-            'academicYears' => $academicYears
+            'academicYears' => $academicYears,
         ]);
     }
 
@@ -67,7 +67,7 @@ class ClassRoomController extends Controller
         return Inertia::render('ClassRooms/Form', [
             'classRoom' => $classRoom,
             'teachers' => $teachers,
-            'academicYears' => $academicYears
+            'academicYears' => $academicYears,
         ]);
     }
 

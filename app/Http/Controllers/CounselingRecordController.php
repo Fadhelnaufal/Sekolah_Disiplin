@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\CounselingRecord;
-use App\Models\Student;
 use App\Models\Semester;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Student;
+use App\Services\AuditService;
+use App\Services\EarlyWarningEngineService;
+use App\Services\StudentPointService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class CounselingRecordController extends Controller
 {
@@ -31,6 +34,13 @@ class CounselingRecordController extends Controller
         }
 
         // Filtering
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('student', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('nis', 'like', "%{$search}%");
+            });
+        }
         if ($request->has('category') && $request->category) {
             $query->where('category', $request->category);
         }
@@ -40,24 +50,32 @@ class CounselingRecordController extends Controller
 
         $records = $query->latest('date_scheduled')->paginate(10)->withQueryString();
 
+        $students = Student::with('classRoom')
+            ->whereIn('status', ['Active', 'aktif', 'Aktif'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'nis', 'class_room_id']);
+
         return Inertia::render('CounselingRecords/Index', [
             'records' => $records,
-            'filters' => $request->only(['category', 'status']),
+            'students' => $students,
+            'can_create' => $user->can('create', CounselingRecord::class),
+            'filters' => $request->only(['category', 'status', 'search']),
             'categories' => [
-                'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan', 
-                'Karier dan pendidikan lanjutan', 'Kesejahteraan pribadi', 
-                'Bullying atau kekerasan', 'Lainnya'
+                'Konseling', 'Bimbingan Pribadi', 'Bimbingan Sosial',
+                'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan',
+                'Karier dan pendidikan lanjutan', 'Kesejahteraan pribadi',
+                'Bullying atau kekerasan', 'Lainnya',
             ],
             'statuses' => ['scheduled', 'in_progress', 'resolved', 'referred', 'cancelled'],
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->authorize('create', CounselingRecord::class);
-        
+
         $activeSemester = Semester::whereIn('status', ['Active', 'aktif', 'Aktif'])->first();
-        if (!$activeSemester) {
+        if (! $activeSemester) {
             return redirect()->back()->with('error', 'Tidak ada semester aktif.');
         }
 
@@ -65,10 +83,12 @@ class CounselingRecordController extends Controller
 
         return Inertia::render('CounselingRecords/Create', [
             'students' => $students,
+            'default_student_id' => $request->query('student_id') ? (int) $request->query('student_id') : null,
             'categories' => [
-                'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan', 
-                'Karier dan pendidikan lanjutan', 'Kesejahteraan pribadi', 
-                'Bullying atau kekerasan', 'Lainnya'
+                'Konseling', 'Bimbingan Pribadi', 'Bimbingan Sosial',
+                'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan',
+                'Karier dan pendidikan lanjutan', 'Kesejahteraan pribadi',
+                'Bullying atau kekerasan', 'Lainnya',
             ],
         ]);
     }
@@ -80,46 +100,88 @@ class CounselingRecordController extends Controller
         $validated = $request->validate([
             'student_id' => 'required|exists:students,id',
             'date_scheduled' => 'required|date',
-            'category' => 'required|string',
-            'reason' => 'required|string',
-            'confidentiality_level' => 'required|in:normal,strict',
+            'category' => 'nullable|string|max:255',
+            'reason' => 'nullable|string',
+            'summary' => 'nullable|string',
+            'original_recorder_name' => 'nullable|string|max:255',
+            'status' => 'nullable|in:scheduled,in_progress,resolved,referred,cancelled',
+            'confidentiality_level' => 'nullable|in:normal,strict',
+            'follow_up_action' => 'nullable|string',
         ]);
 
-        $activeSemester = Semester::whereIn('status', ['Active', 'aktif', 'Aktif'])->firstOrFail();
+        $activeSemester = Semester::whereIn('status', ['Active', 'aktif', 'Aktif'])->first();
+        if (! $activeSemester) {
+            return back()->with('error', 'Tidak ada semester aktif. Harap atur semester aktif terlebih dahulu.');
+        }
 
-        $record = CounselingRecord::create(array_merge($validated, [
+        $user = Auth::user();
+
+        $record = CounselingRecord::create([
             'semester_id' => $activeSemester->id,
-            'counselor_id' => Auth::id(),
-            'status' => 'scheduled',
-            'created_by' => Auth::id(),
-        ]));
-        
-        \App\Services\AuditService::logCreated($record, "Mencatat jadwal konseling baru");
+            'student_id' => $validated['student_id'],
+            'counselor_id' => $user->id,
+            'original_recorder_name' => ! empty($validated['original_recorder_name']) ? $validated['original_recorder_name'] : ($user->name ?? 'Petugas BK'),
+            'date_scheduled' => $validated['date_scheduled'],
+            'date_completed' => ! empty($validated['summary']) ? now()->toDateString() : null,
+            'category' => ! empty($validated['category']) ? $validated['category'] : 'Konseling',
+            'reason' => ! empty($validated['reason']) ? $validated['reason'] : 'Sesi pembinaan kedisiplinan dan karakter siswa',
+            'summary' => $validated['summary'] ?? null,
+            'follow_up_action' => $validated['follow_up_action'] ?? null,
+            'status' => $validated['status'] ?? (! empty($validated['summary']) ? 'resolved' : 'scheduled'),
+            'confidentiality_level' => $validated['confidentiality_level'] ?? 'normal',
+            'created_by' => $user->id,
+        ]);
 
-        return redirect()->route('counseling-records.index')->with('success', 'Jadwal konseling berhasil dibuat.');
+        AuditService::logCreated($record, 'Mencatat sesi pembinaan siswa baru');
+
+        return redirect()->route('counseling-records.index')->with('success', 'Catatan pembinaan berhasil disimpan.');
     }
 
-    public function show(CounselingRecord $counselingRecord)
+    public function show(CounselingRecord $counselingRecord, StudentPointService $pointService, EarlyWarningEngineService $earlyWarningService)
     {
         $this->authorize('view', $counselingRecord);
-        $counselingRecord->load(['student.classRoom', 'counselor', 'semester']);
+        $counselingRecord->load([
+            'student.classRoom.homeroomTeacher',
+            'counselor',
+            'semester.academicYear',
+        ]);
+
+        $user = Auth::user();
+        $student = $counselingRecord->student;
+        $semester = $counselingRecord->semester ?: Semester::whereIn('status', ['Active', 'aktif', 'Aktif'])->first();
+
+        $studentSummary = null;
+        if ($student && $semester) {
+            $studentSummary = [
+                'violation_points' => $pointService->getViolationPoints($student, $semester),
+                'achievement_points' => $pointService->getAchievementPoints($student, $semester),
+                'net_points' => $pointService->getNetPoints($student, $semester),
+                'risk_status' => $earlyWarningService->evaluateRiskStatus($student, $semester),
+            ];
+        }
 
         return Inertia::render('CounselingRecords/Show', [
             'record' => $counselingRecord,
+            'studentSummary' => $studentSummary,
+            'can' => [
+                'update' => $user ? $user->can('update', $counselingRecord) : false,
+                'delete' => $user ? $user->can('delete', $counselingRecord) : false,
+            ],
         ]);
     }
 
     public function edit(CounselingRecord $counselingRecord)
     {
         $this->authorize('update', $counselingRecord);
-        $counselingRecord->load('student.classRoom');
+        $counselingRecord->load(['student.classRoom', 'counselor', 'semester.academicYear']);
 
         return Inertia::render('CounselingRecords/Edit', [
             'record' => $counselingRecord,
             'categories' => [
-                'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan', 
-                'Karier dan pendidikan lanjutan', 'Kesejahteraan pribadi', 
-                'Bullying atau kekerasan', 'Lainnya'
+                'Konseling', 'Bimbingan Pribadi', 'Bimbingan Sosial',
+                'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan',
+                'Karier dan pendidikan lanjutan', 'Kesejahteraan pribadi',
+                'Bullying atau kekerasan', 'Lainnya',
             ],
             'statuses' => ['scheduled', 'in_progress', 'resolved', 'referred', 'cancelled'],
         ]);
@@ -129,38 +191,63 @@ class CounselingRecordController extends Controller
     {
         $this->authorize('update', $counselingRecord);
 
-        if ($counselingRecord->semester->status === 'Closed') {
+        if ($counselingRecord->semester && $counselingRecord->semester->status === 'Closed') {
             return back()->with('error', 'Tidak dapat mengubah catatan pada semester yang sudah ditutup.');
         }
 
         $validated = $request->validate([
+            'student_id' => 'sometimes|required|exists:students,id',
             'date_scheduled' => 'required|date',
             'date_completed' => 'nullable|date',
-            'category' => 'required|string',
-            'reason' => 'required|string',
+            'category' => 'nullable|string|max:255',
+            'reason' => 'nullable|string',
             'summary' => 'nullable|string',
+            'original_recorder_name' => 'nullable|string|max:255',
+            'status' => 'nullable|in:scheduled,in_progress,resolved,referred,cancelled',
+            'confidentiality_level' => 'nullable|in:normal,strict',
             'follow_up_action' => 'nullable|string',
-            'status' => 'required|in:scheduled,in_progress,resolved,referred,cancelled',
-            'confidentiality_level' => 'required|in:normal,strict',
         ]);
 
-        $validated['updated_by'] = Auth::id();
+        $updateData = [
+            'date_scheduled' => $validated['date_scheduled'],
+            'category' => ! empty($validated['category']) ? $validated['category'] : ($counselingRecord->category ?: 'Konseling'),
+            'reason' => $validated['reason'] ?? $counselingRecord->reason,
+            'summary' => $validated['summary'] ?? $counselingRecord->summary,
+            'follow_up_action' => $validated['follow_up_action'] ?? $counselingRecord->follow_up_action,
+            'status' => $validated['status'] ?? $counselingRecord->status,
+            'confidentiality_level' => $validated['confidentiality_level'] ?? $counselingRecord->confidentiality_level,
+            'updated_by' => Auth::id(),
+        ];
 
-        $counselingRecord->update($validated);
-        \App\Services\AuditService::logUpdated($counselingRecord, "Memperbarui catatan konseling siswa");
+        if (isset($validated['student_id'])) {
+            $updateData['student_id'] = $validated['student_id'];
+        }
 
-        return redirect()->route('counseling-records.index')->with('success', 'Catatan konseling berhasil diperbarui.');
+        if (isset($validated['original_recorder_name'])) {
+            $updateData['original_recorder_name'] = $validated['original_recorder_name'];
+        }
+
+        if (! empty($validated['date_completed'])) {
+            $updateData['date_completed'] = $validated['date_completed'];
+        } elseif (! empty($validated['summary']) && empty($counselingRecord->date_completed)) {
+            $updateData['date_completed'] = now()->toDateString();
+        }
+
+        $counselingRecord->update($updateData);
+        AuditService::logUpdated($counselingRecord, 'Memperbarui catatan pembinaan siswa');
+
+        return redirect()->route('counseling-records.index')->with('success', 'Catatan pembinaan berhasil diperbarui.');
     }
 
     public function destroy(CounselingRecord $counselingRecord)
     {
         $this->authorize('delete', $counselingRecord);
-        
+
         if ($counselingRecord->semester->status === 'Closed') {
             return back()->with('error', 'Tidak dapat menghapus catatan pada semester yang sudah ditutup.');
         }
 
-        \App\Services\AuditService::logDeleted($counselingRecord, "Menghapus catatan konseling siswa");
+        AuditService::logDeleted($counselingRecord, 'Menghapus catatan konseling siswa');
         $counselingRecord->delete();
 
         return redirect()->route('counseling-records.index')->with('success', 'Catatan konseling berhasil dihapus.');

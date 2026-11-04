@@ -10,21 +10,7 @@ class AchievementController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Achievement::query();
-
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('code', 'ilike', "%{$search}%")
-                  ->orWhere('level', 'ilike', "%{$search}%");
-        }
-
-        $achievements = $query->orderBy('level')->orderBy('deduction_points', 'desc')->paginate(15)->withQueryString();
-
-        return Inertia::render('Achievements/Index', [
-            'achievements' => $achievements,
-            'filters' => $request->only('search'),
-        ]);
+        return redirect()->route('master-data.index', ['tab' => 'achievements']);
     }
 
     public function create()
@@ -48,20 +34,20 @@ class AchievementController extends Controller
 
         Achievement::create($validated);
 
-        return redirect()->route('achievements.index')->with('success', 'Master prestasi berhasil ditambahkan.');
+        return redirect()->route('master-data.index', ['tab' => 'achievements'])->with('success', 'Master prestasi berhasil ditambahkan.');
     }
 
     public function edit(Achievement $achievement)
     {
         return Inertia::render('Achievements/Form', [
-            'achievement' => $achievement
+            'achievement' => $achievement,
         ]);
     }
 
     public function update(Request $request, Achievement $achievement)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:achievements,code,' . $achievement->id,
+            'code' => 'required|string|max:50|unique:achievements,code,'.$achievement->id,
             'name' => 'required|string|max:255',
             'level' => 'required|string|max:100',
             'deduction_points' => 'required|integer|min:1',
@@ -72,7 +58,7 @@ class AchievementController extends Controller
 
         $achievement->update($validated);
 
-        return redirect()->route('achievements.index')->with('success', 'Master prestasi berhasil diperbarui.');
+        return redirect()->route('master-data.index', ['tab' => 'achievements'])->with('success', 'Master prestasi berhasil diperbarui.');
     }
 
     public function destroy(Achievement $achievement)
@@ -84,6 +70,6 @@ class AchievementController extends Controller
 
         $achievement->delete();
 
-        return redirect()->route('achievements.index')->with('success', 'Master prestasi berhasil dihapus.');
+        return redirect()->route('master-data.index', ['tab' => 'achievements'])->with('success', 'Master prestasi berhasil dihapus.');
     }
 }

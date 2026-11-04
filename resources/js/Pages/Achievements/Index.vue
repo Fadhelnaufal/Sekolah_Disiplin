@@ -56,7 +56,7 @@ const deleteAchievement = (id: number) => {
 </script>
 
 <template>
-    <Head title="Master Prestasi - Disiplin Pro" />
+    <Head title="Master Prestasi - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
         <div class="max-w-[1400px] mx-auto space-y-8">
@@ -71,13 +71,6 @@ const deleteAchievement = (id: number) => {
                         <i class="pi pi-plus text-xs"></i> Tambah Prestasi
                     </Link>
                 </div>
-            </div>
-
-            <div v-if="$page.props.flash?.success" class="bg-green-50 text-green-600 px-5 py-4 rounded-[16px] text-[14px] font-medium border border-green-100 flex items-center gap-3 shadow-sm">
-                <i class="pi pi-check-circle"></i> {{ $page.props.flash.success }}
-            </div>
-            <div v-if="$page.props.flash?.error" class="bg-red-50 text-red-600 px-5 py-4 rounded-[16px] text-[14px] font-medium border border-red-100 flex items-center gap-3 shadow-sm">
-                <i class="pi pi-exclamation-circle"></i> {{ $page.props.flash.error }}
             </div>
 
             <!-- Main Card -->
@@ -103,36 +96,28 @@ const deleteAchievement = (id: number) => {
                     emptyMessage="Tidak ada data prestasi ditemukan.">
                     
                     <Column field="code" header="Kode" class="border-b border-gray-50 py-4 w-28">
-                        <template #header>
-                            <span class="text-xs font-semibold text-gray-400 uppercase">Kode</span>
-                        </template>
+                       
                         <template #body="slotProps">
                             <span class="text-gray-500 font-medium text-[13px]">{{ slotProps.data.code }}</span>
                         </template>
                     </Column>
                     
                     <Column field="name" header="Nama Prestasi" class="border-b border-gray-50 py-4">
-                        <template #header>
-                            <span class="text-xs font-semibold text-gray-400 uppercase">Nama Prestasi</span>
-                        </template>
+                        
                         <template #body="slotProps">
                             <span class="font-bold text-gray-900 text-[14px]">{{ slotProps.data.name }}</span>
                         </template>
                     </Column>
                     
                     <Column field="level" header="Tingkat" class="border-b border-gray-50 py-4 w-48">
-                        <template #header>
-                            <span class="text-xs font-semibold text-gray-400 uppercase">Tingkat / Level</span>
-                        </template>
+                       
                         <template #body="slotProps">
                             <span class="text-gray-700 text-[13px] font-medium">{{ slotProps.data.level }}</span>
                         </template>
                     </Column>
                     
                     <Column field="deduction_points" header="Pengurang" class="text-right border-b border-gray-50 py-4 w-32">
-                        <template #header>
-                            <div class="text-xs font-semibold text-gray-400 uppercase text-right w-full">Pengurang</div>
-                        </template>
+                      
                         <template #body="slotProps">
                             <div class="inline-flex px-2 py-1 rounded-md text-[12px] font-bold bg-green-50 text-green-600">
                                 -{{ slotProps.data.deduction_points }}
@@ -141,9 +126,7 @@ const deleteAchievement = (id: number) => {
                     </Column>
                     
                     <Column field="is_active" header="Status" class="text-center border-b border-gray-50 py-4 w-32">
-                        <template #header>
-                            <div class="text-xs font-semibold text-gray-400 uppercase text-center w-full">Status</div>
-                        </template>
+                      
                         <template #body="slotProps">
                             <div class="inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider" :class="slotProps.data.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-500'">
                                 {{ slotProps.data.is_active ? 'Aktif' : 'Nonaktif' }}

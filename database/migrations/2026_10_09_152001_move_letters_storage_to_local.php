@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 return new class extends Migration
@@ -20,7 +19,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Reverse is not necessary since local is more secure, 
+        // Reverse is not necessary since local is more secure,
         // but if we were to reverse:
         if (Storage::disk('local')->exists('letters')) {
             $files = Storage::disk('local')->files('letters');

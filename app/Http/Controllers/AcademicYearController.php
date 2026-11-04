@@ -58,14 +58,14 @@ class AcademicYearController extends Controller
     public function edit(AcademicYear $academicYear)
     {
         return Inertia::render('AcademicYears/Form', [
-            'academicYear' => $academicYear
+            'academicYear' => $academicYear,
         ]);
     }
 
     public function update(Request $request, AcademicYear $academicYear)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:50|unique:academic_years,name,' . $academicYear->id,
+            'name' => 'required|string|max:50|unique:academic_years,name,'.$academicYear->id,
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'status' => 'required|string|max:50',

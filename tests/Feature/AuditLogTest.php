@@ -2,14 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
-use App\Models\Student;
-use App\Models\User;
-use App\Models\School;
 use App\Models\AcademicYear;
 use App\Models\ClassRoom;
-use App\Models\Semester;
 use App\Models\DisciplineEvent;
+use App\Models\School;
+use App\Models\Semester;
+use App\Models\Student;
+use App\Models\User;
 use App\Models\Violation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,34 +20,34 @@ class AuditLogTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->artisan('db:seed');
-        
+
         $this->adminUser = User::factory()->create();
         $this->adminUser->assignRole('Super Admin');
-        
+
         $this->teacherUser = User::factory()->create();
         $this->teacherUser->assignRole('Teacher');
 
         $this->school = School::first();
         $this->academicYear = AcademicYear::first();
-        
+
         $this->classRoom = ClassRoom::create([
             'school_id' => $this->school->id,
             'academic_year_id' => $this->academicYear->id,
             'name' => '7A',
-            'grade_level' => '7'
+            'grade_level' => '7',
         ]);
 
         $this->activeSemester = Semester::firstOrCreate([
             'academic_year_id' => $this->academicYear->id,
-            'name' => 'Ganjil Audit Test'
+            'name' => 'Ganjil Audit Test',
         ], [
             'start_date' => '2026-07-01',
             'end_date' => '2026-12-31',
-            'status' => 'Active'
+            'status' => 'Active',
         ]);
-        
+
         // Ensure it's active
         $this->activeSemester->update(['status' => 'Active']);
     }
@@ -60,7 +59,7 @@ class AuditLogTest extends TestCase
                 'nis' => '12345',
                 'name' => 'Audit Test Student',
                 'class_room_id' => $this->classRoom->id,
-                'status' => 'Active'
+                'status' => 'Active',
             ]);
 
         $student = Student::where('nis', '12345')->first();
@@ -70,7 +69,7 @@ class AuditLogTest extends TestCase
             'action' => 'created',
             'subject_type' => Student::class,
             'subject_id' => $student->id,
-            'user_id' => $this->adminUser->id
+            'user_id' => $this->adminUser->id,
         ]);
     }
 
@@ -81,14 +80,14 @@ class AuditLogTest extends TestCase
             'class_room_id' => $this->classRoom->id,
             'nis' => '999',
             'name' => 'Test',
-            'status' => 'Active'
+            'status' => 'Active',
         ]);
 
         $violation = Violation::create([
             'code' => 'V1',
             'name' => 'Test Violation',
             'category' => 'Test',
-            'points' => 10
+            'points' => 10,
         ]);
 
         $response = $this->actingAs($this->adminUser)
@@ -100,7 +99,7 @@ class AuditLogTest extends TestCase
             ]);
 
         $response->assertSessionHasNoErrors();
-        
+
         if ($response->isRedirect() && session()->has('error')) {
             dump(session()->get('error'));
         }
@@ -112,7 +111,7 @@ class AuditLogTest extends TestCase
             'action' => 'created',
             'subject_type' => DisciplineEvent::class,
             'subject_id' => $event->id,
-            'user_id' => $this->adminUser->id
+            'user_id' => $this->adminUser->id,
         ]);
     }
 

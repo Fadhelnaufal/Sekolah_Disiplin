@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Semester;
 use App\Models\AcademicYear;
+use App\Models\Semester;
+use App\Services\AuditService;
 use App\Services\SemesterService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,8 +37,9 @@ class SemesterController extends Controller
     public function create()
     {
         $academicYears = AcademicYear::orderBy('name', 'desc')->get(['id', 'name', 'status']);
+
         return Inertia::render('Semesters/Form', [
-            'academicYears' => $academicYears
+            'academicYears' => $academicYears,
         ]);
     }
 
@@ -63,9 +65,10 @@ class SemesterController extends Controller
     public function edit(Semester $semester)
     {
         $academicYears = AcademicYear::orderBy('name', 'desc')->get(['id', 'name', 'status']);
+
         return Inertia::render('Semesters/Form', [
             'semester' => $semester,
-            'academicYears' => $academicYears
+            'academicYears' => $academicYears,
         ]);
     }
 
@@ -104,7 +107,8 @@ class SemesterController extends Controller
     {
         try {
             $semesterService->closeSemester($semester, auth()->id());
-            \App\Services\AuditService::log('closed', "Menutup semester {$semester->name}", $semester, [], ['status' => 'Closed']);
+            AuditService::log('closed', "Menutup semester {$semester->name}", $semester, [], ['status' => 'Closed']);
+
             return back()->with('success', 'Semester berhasil ditutup dan snapshot data siswa telah dibuat.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());

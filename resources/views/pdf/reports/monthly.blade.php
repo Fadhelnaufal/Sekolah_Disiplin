@@ -2,64 +2,104 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Laporan Bulanan</title>
-    <style>
-        body { font-family: sans-serif; font-size: 12px; }
-        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-        .school-name { font-size: 18px; font-weight: bold; margin: 0; }
-        .school-address { font-size: 12px; margin: 5px 0; }
-        .title { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-    </style>
+    <title>Laporan Rekapitulasi Kedisiplinan Siswa</title>
+    @include('pdf.partials.styles')
 </head>
 <body>
-    <div class="header">
-        <p class="school-name">{{ $school->name ?? 'NAMA SEKOLAH' }}</p>
-        <p class="school-address">{{ $school->address ?? 'ALAMAT SEKOLAH' }}</p>
+
+    @include('pdf.partials.kop', ['school' => $school])
+
+    <div class="document-header-area">
+        <h2 class="document-title">LAPORAN REKAPITULASI KEDISIPLINAN SISWA</h2>
+        <div class="document-number">
+            Periode: {{ $semester->name }} &bull; Tahun Ajaran: {{ $semester->academicYear->name }}
+        </div>
     </div>
 
-    <div class="title">
-        LAPORAN REKAPITULASI POIN SISWA<br>
-        <span style="font-size: 12px; font-weight: normal;">Periode: {{ $semester->name }} ({{ $semester->academicYear->name }})</span>
-    </div>
+    @php
+        $totalStudents = count($students);
+        $totalViolations = $students->sum('violation_count');
+        $totalViolationPoints = $students->sum('violation_points');
+        $totalAchievements = $students->sum('achievement_count');
+        $totalAchievementPoints = $students->sum('achievement_points');
+        $totalNetPoints = $students->sum('net_points');
+        $avgNetPoints = $totalStudents > 0 ? round($totalNetPoints / $totalStudents, 1) : 0;
+    @endphp
 
-    <table>
+    <!-- Summary Statistics Cards -->
+    <table class="point-boxes-table no-break" style="margin-bottom: 18px;">
+        <tr>
+            <td class="point-box-td" style="width: 20%;">
+                <div class="point-box-label">Total Siswa</div>
+                <div class="point-box-val">{{ $totalStudents }}</div>
+            </td>
+            <td class="point-box-td" style="width: 20%;">
+                <div class="point-box-label">Pelanggaran</div>
+                <div class="point-box-val" style="color: #DC2626;">{{ $totalViolations }} <span style="font-size: 8.5pt; font-weight: normal;">({{ $totalViolationPoints }} poin)</span></div>
+            </td>
+            <td class="point-box-td" style="width: 20%;">
+                <div class="point-box-label">Prestasi</div>
+                <div class="point-box-val" style="color: #059669;">{{ $totalAchievements }} <span style="font-size: 8.5pt; font-weight: normal;">({{ $totalAchievementPoints }} poin)</span></div>
+            </td>
+            <td class="point-box-td" style="width: 20%;">
+                <div class="point-box-label">Total Poin Bersih</div>
+                <div class="point-box-val">{{ $totalNetPoints }} poin</div>
+            </td>
+            <td class="point-box-td" style="width: 20%;">
+                <div class="point-box-label">Rata-rata / Siswa</div>
+                <div class="point-box-val">{{ $avgNetPoints }} poin</div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="data-table">
         <thead>
             <tr>
-                <th>No</th>
-                <th>NIS</th>
+                <th style="width: 28px;">No</th>
+                <th style="width: 70px;">NIS</th>
                 <th>Nama Siswa</th>
-                <th>Kelas</th>
-                <th class="text-center">Jml Pelanggaran</th>
-                <th class="text-center">Poin Pelanggaran</th>
-                <th class="text-center">Jml Prestasi</th>
-                <th class="text-center">Poin Prestasi</th>
-                <th class="text-center">Poin Bersih</th>
+                <th style="width: 65px;">Kelas</th>
+                <th style="width: 50px;">Jml Pel.</th>
+                <th style="width: 55px;">Poin Pel.</th>
+                <th style="width: 50px;">Jml Pres.</th>
+                <th style="width: 55px;">Poin Pres.</th>
+                <th style="width: 65px;">Poin Bersih</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($students as $index => $student)
+            @forelse($students as $index => $student)
             <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $student->nis }}</td>
-                <td>{{ $student->name }}</td>
-                <td>{{ $student->classRoom ? $student->classRoom->name : '-' }}</td>
-                <td class="text-center">{{ $student->violation_count }}</td>
-                <td class="text-center">{{ $student->violation_points }}</td>
-                <td class="text-center">{{ $student->achievement_count }}</td>
-                <td class="text-center">{{ $student->achievement_points }}</td>
-                <td class="text-center" style="font-weight: bold;">{{ $student->net_points }}</td>
+                <td style="text-align: center;">{{ $index + 1 }}</td>
+                <td style="text-align: center;">{{ $student->nis }}</td>
+                <td><strong>{{ $student->name }}</strong></td>
+                <td style="text-align: center;">{{ $student->classRoom ? $student->classRoom->name : '-' }}</td>
+                <td style="text-align: center;">{{ $student->violation_count }}</td>
+                <td style="text-align: center; color: #DC2626;">{{ $student->violation_points }}</td>
+                <td style="text-align: center;">{{ $student->achievement_count }}</td>
+                <td style="text-align: center; color: #059669;">{{ $student->achievement_points }}</td>
+                <td style="text-align: center; font-weight: bold;">{{ $student->net_points }}</td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 12px; color: #6B7280;">Tidak ada data kedisiplinan siswa pada periode ini.</td>
+            </tr>
+            @endforelse
         </tbody>
+        @if($totalStudents > 0)
+        <tfoot>
+            <tr style="background-color: #F9FAFB; font-weight: bold;">
+                <td colspan="4" style="text-align: right; padding-right: 10px;">TOTAL:</td>
+                <td style="text-align: center;">{{ $totalViolations }}</td>
+                <td style="text-align: center; color: #DC2626;">{{ $totalViolationPoints }}</td>
+                <td style="text-align: center;">{{ $totalAchievements }}</td>
+                <td style="text-align: center; color: #059669;">{{ $totalAchievementPoints }}</td>
+                <td style="text-align: center;">{{ $totalNetPoints }}</td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 
-    <div style="margin-top: 30px; text-align: right;">
-        <p>Dicetak pada: {{ now()->format('d/m/Y H:i') }}</p>
-    </div>
+    @include('pdf.partials.signatory', ['school' => $school])
+
 </body>
 </html>

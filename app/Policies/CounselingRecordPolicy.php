@@ -28,17 +28,26 @@ class CounselingRecordPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasRole('BK');
+        return $user->hasRole('BK') || $user->hasRole('Super Admin');
     }
 
     public function update(User $user, CounselingRecord $counselingRecord): bool
     {
+        if ($user->hasRole('Super Admin')) {
+            return $counselingRecord->confidentiality_level !== 'strict';
+        }
+
         return $user->hasRole('BK') && $user->id === $counselingRecord->counselor_id;
     }
 
     public function delete(User $user, CounselingRecord $counselingRecord): bool
     {
-        return $user->hasRole('BK') && $user->id === $counselingRecord->counselor_id 
+        if ($user->hasRole('Super Admin')) {
+            return $counselingRecord->confidentiality_level !== 'strict'
+                && in_array($counselingRecord->status, ['scheduled', 'cancelled']);
+        }
+
+        return $user->hasRole('BK') && $user->id === $counselingRecord->counselor_id
             && in_array($counselingRecord->status, ['scheduled', 'cancelled']);
     }
 

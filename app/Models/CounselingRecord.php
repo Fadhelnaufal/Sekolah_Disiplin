@@ -10,10 +10,10 @@ class CounselingRecord extends Model
     use HasFactory;
 
     protected $fillable = [
-        'semester_id', 'student_id', 'counselor_id', 'original_recorder_name', 
-        'date_scheduled', 'date_completed', 'category', 
-        'reason', 'summary', 'follow_up_action', 
-        'status', 'confidentiality_level', 'created_by', 'updated_by'
+        'semester_id', 'student_id', 'counselor_id', 'original_recorder_name',
+        'date_scheduled', 'date_completed', 'category',
+        'reason', 'summary', 'follow_up_action',
+        'status', 'confidentiality_level', 'created_by', 'updated_by',
     ];
 
     protected $casts = [

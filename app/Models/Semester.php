@@ -10,8 +10,8 @@ class Semester extends Model
     use HasFactory;
 
     protected $fillable = [
-        'academic_year_id', 'name', 'start_date', 'end_date', 
-        'status', 'closed_at', 'closed_by'
+        'academic_year_id', 'name', 'start_date', 'end_date',
+        'status', 'closed_at', 'closed_by',
     ];
 
     protected $casts = [

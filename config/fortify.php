@@ -167,6 +167,6 @@ return [
         Features::updateProfileInformation(),
         Features::updatePasswords(),
     ],
-    
+
     'home' => 'dashboard',
 ];
