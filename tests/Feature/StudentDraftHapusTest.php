@@ -147,4 +147,81 @@ class StudentDraftHapusTest extends TestCase
             'name' => '7 Unggulan A',
         ]);
     }
+
+    public function test_can_view_student_create_page()
+    {
+        $response = $this->actingAs($this->adminUser)->get(route('students.create'));
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Students/Form')
+            ->has('classRooms')
+        );
+    }
+
+    public function test_can_store_new_student_from_create_form()
+    {
+        $response = $this->actingAs($this->adminUser)->post(route('students.store'), [
+            'nis' => '999001',
+            'name' => 'Ahmad Dahlan',
+            'class_room_id' => $this->classRoom->id,
+            'status' => 'Active',
+            'parent_name' => 'K.H. Abu Bakar',
+            'parent_phone' => '081298765432',
+            'notes' => 'Catatan pendaftaran baru',
+        ]);
+
+        $response->assertRedirect(route('students.index'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('students', [
+            'nis' => '999001',
+            'name' => 'Ahmad Dahlan',
+            'class_room_id' => $this->classRoom->id,
+            'status' => 'Active',
+            'parent_name' => 'K.H. Abu Bakar',
+            'parent_phone' => '081298765432',
+            'notes' => 'Catatan pendaftaran baru',
+        ]);
+    }
+
+    public function test_store_student_validates_required_fields_and_unique_nis()
+    {
+        // Duplicate NIS
+        $response = $this->actingAs($this->adminUser)->post(route('students.store'), [
+            'nis' => $this->student->nis, // already exists
+            'name' => '',
+            'class_room_id' => '',
+            'status' => '',
+        ]);
+
+        $response->assertSessionHasErrors(['nis', 'name', 'class_room_id', 'status']);
+    }
+
+    public function test_can_view_student_edit_page_and_update()
+    {
+        $response = $this->actingAs($this->adminUser)->get(route('students.edit', $this->student));
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => $page
+            ->component('Students/Form')
+            ->has('student')
+            ->has('classRooms')
+        );
+
+        $updateResponse = $this->actingAs($this->adminUser)->put(route('students.update', $this->student), [
+            'nis' => $this->student->nis,
+            'name' => 'Budi Santoso Diperbarui',
+            'class_room_id' => $this->classRoom->id,
+            'status' => 'Active',
+            'parent_name' => 'Bapak Santoso',
+            'parent_phone' => '08111222333',
+            'notes' => 'Profil telah diperbarui',
+        ]);
+
+        $updateResponse->assertRedirect(route('students.index'));
+        $this->assertDatabaseHas('students', [
+            'id' => $this->student->id,
+            'name' => 'Budi Santoso Diperbarui',
+            'parent_phone' => '08111222333',
+        ]);
+    }
 }
