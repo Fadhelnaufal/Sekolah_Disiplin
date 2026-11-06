@@ -46,14 +46,38 @@ class DisciplineEventController extends Controller
             $query->where('event_type', $request->event_type);
         }
 
+        if ($request->filled('class_id')) {
+            $classId = $request->input('class_id');
+            $query->whereHas('student', function ($q) use ($classId) {
+                $q->where('class_room_id', $classId);
+            });
+        }
+
+        if ($request->filled('semester_id')) {
+            $query->where('semester_id', $request->input('semester_id'));
+        }
+
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
         $events = $query->orderBy('event_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
+
+        $classRooms = ClassRoom::whereIn('status', ['Active', 'active'])->orderBy('grade_level')->orderBy('name')->get(['id', 'name']);
+        if ($classRooms->isEmpty()) {
+            $classRooms = ClassRoom::orderBy('name')->get(['id', 'name']);
+        }
+        $semesters = Semester::orderBy('start_date', 'desc')->get(['id', 'name', 'status']);
 
         return Inertia::render('DisciplineEvents/Index', [
             'events' => $events,
-            'filters' => $request->only('search', 'event_type'),
+            'classRooms' => $classRooms,
+            'semesters' => $semesters,
+            'filters' => $request->only('search', 'event_type', 'class_id', 'semester_id', 'per_page'),
         ]);
     }
 

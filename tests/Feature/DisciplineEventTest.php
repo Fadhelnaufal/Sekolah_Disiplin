@@ -450,4 +450,117 @@ class DisciplineEventTest extends TestCase
         Storage::disk('public')->assertExists($event->attachment_path);
         $this->assertStringContainsString('/storage/', $event->attachment_url);
     }
+
+    public function test_discipline_events_index_filters_by_class_and_semester_and_event_type(): void
+    {
+        [$semester1, $student1, $teacherUser] = $this->createDependencies();
+
+        $academicYear = AcademicYear::where('status', 'Active')->first();
+        $school = School::first();
+
+        $semester2 = Semester::create([
+            'academic_year_id' => $academicYear->id,
+            'name' => 'Genap',
+            'start_date' => now()->addMonths(4)->format('Y-m-d'),
+            'end_date' => now()->addMonths(10)->format('Y-m-d'),
+            'status' => 'Inactive',
+        ]);
+
+        $classRoom2 = ClassRoom::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $academicYear->id,
+            'name' => '10 TKJ 1',
+            'grade_level' => '10',
+            'status' => 'Active',
+        ]);
+
+        $student2 = Student::create([
+            'school_id' => $school->id,
+            'class_room_id' => $classRoom2->id,
+            'nis' => '100200',
+            'name' => 'Siswa TKJ',
+            'status' => 'Active',
+        ]);
+
+        $violation = Violation::create([
+            'code' => 'VIO-FLT',
+            'name' => 'Atribut Tidak Lengkap',
+            'category' => 'Ringan',
+            'points' => 5,
+        ]);
+
+        $achievement = Achievement::create([
+            'code' => 'ACH-FLT',
+            'name' => 'Juara LKS',
+            'level' => 'Kota',
+            'deduction_points' => 15,
+            'is_active' => true,
+        ]);
+
+        // Event 1: Student 1 (Class 1), Semester 1, Violation
+        DisciplineEvent::create([
+            'semester_id' => $semester1->id,
+            'student_id' => $student1->id,
+            'event_date' => now()->format('Y-m-d'),
+            'event_type' => 'violation',
+            'violation_id' => $violation->id,
+            'points_effect' => 5,
+            'recorded_by' => $teacherUser->id,
+        ]);
+
+        // Event 2: Student 2 (Class 2), Semester 2, Achievement
+        DisciplineEvent::create([
+            'semester_id' => $semester2->id,
+            'student_id' => $student2->id,
+            'event_date' => now()->format('Y-m-d'),
+            'event_type' => 'achievement',
+            'achievement_id' => $achievement->id,
+            'points_effect' => -15,
+            'recorded_by' => $teacherUser->id,
+        ]);
+
+        // Filter by class_id of student 1
+        $resClass = $this->actingAs($teacherUser)->get(route('discipline-events.index', [
+            'class_id' => $student1->class_room_id,
+        ]));
+        $resClass->assertOk();
+        $resClass->assertInertia(fn ($page) => $page
+            ->component('DisciplineEvents/Index')
+            ->has('events.data', 1)
+            ->where('events.data.0.student.id', $student1->id)
+            ->has('classRooms')
+            ->has('semesters')
+        );
+
+        // Filter by semester_id of semester 2
+        $resSemester = $this->actingAs($teacherUser)->get(route('discipline-events.index', [
+            'semester_id' => $semester2->id,
+        ]));
+        $resSemester->assertOk();
+        $resSemester->assertInertia(fn ($page) => $page
+            ->component('DisciplineEvents/Index')
+            ->has('events.data', 1)
+            ->where('events.data.0.semester_id', $semester2->id)
+        );
+
+        // Filter by event_type 'achievement'
+        $resType = $this->actingAs($teacherUser)->get(route('discipline-events.index', [
+            'event_type' => 'achievement',
+        ]));
+        $resType->assertOk();
+        $resType->assertInertia(fn ($page) => $page
+            ->component('DisciplineEvents/Index')
+            ->has('events.data', 1)
+            ->where('events.data.0.event_type', 'achievement')
+        );
+
+        // Custom pagination per_page
+        $resPerPage = $this->actingAs($teacherUser)->get(route('discipline-events.index', [
+            'per_page' => 25,
+        ]));
+        $resPerPage->assertOk();
+        $resPerPage->assertInertia(fn ($page) => $page
+            ->where('events.per_page', 25)
+        );
+    }
 }
