@@ -1,3 +1,72 @@
+import Swal from 'sweetalert2';
+
+/**
+ * Standard confirmation dialog for destructive actions (e.g. deletion).
+ * Returns true if confirmed, false otherwise.
+ */
+export async function confirmDelete(options?: {
+    title?: string;
+    text?: string;
+    confirmButtonText?: string;
+    cancelButtonText?: string;
+}): Promise<boolean> {
+    const result = await Swal.fire({
+        title: options?.title || 'Konfirmasi Hapus',
+        text: options?.text || 'Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: options?.confirmButtonText || 'Ya, Hapus',
+        cancelButtonText: options?.cancelButtonText || 'Batal',
+        reverseButtons: true,
+    });
+    return result.isConfirmed;
+}
+
+/**
+ * Standard confirmation dialog for general important actions (e.g. status changes, closing semester).
+ */
+export async function confirmAction(options: {
+    title: string;
+    text: string;
+    icon?: 'warning' | 'info' | 'question';
+    confirmButtonText?: string;
+    cancelButtonText?: string;
+    confirmButtonColor?: string;
+}): Promise<boolean> {
+    const result = await Swal.fire({
+        title: options.title,
+        text: options.text,
+        icon: options.icon || 'warning',
+        showCancelButton: true,
+        confirmButtonColor: options.confirmButtonColor || '#001AFF',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: options.confirmButtonText || 'Lanjutkan',
+        cancelButtonText: options.cancelButtonText || 'Batal',
+        reverseButtons: true,
+    });
+    return result.isConfirmed;
+}
+
+/**
+ * Standard modal alert for informational / status messages.
+ */
+export function showAlert(options: {
+    title: string;
+    text?: string;
+    icon?: 'success' | 'error' | 'warning' | 'info';
+    confirmButtonText?: string;
+}): Promise<any> {
+    return Swal.fire({
+        title: options.title,
+        text: options.text || '',
+        icon: options.icon || 'info',
+        confirmButtonColor: '#001AFF',
+        confirmButtonText: options.confirmButtonText || 'Tutup',
+    });
+}
+
 /**
  * Utility functions for WhatsApp notification integration.
  */
