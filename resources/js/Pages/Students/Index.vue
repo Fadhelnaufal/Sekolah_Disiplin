@@ -3,6 +3,8 @@ import { ref, watch, computed } from "vue";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { useConfirm } from "primevue/useconfirm";
 import Dialog from "primevue/dialog";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
 
 import AuthenticatedLayout from "../../Layouts/AuthenticatedLayout.vue";
 
@@ -13,6 +15,8 @@ const props = defineProps<{
             nis: string;
             name: string;
             status: string;
+            parent_name?: string | null;
+            parent_phone?: string | null;
             class_room: {
                 id: number;
                 name: string;
@@ -22,6 +26,12 @@ const props = defineProps<{
             deleted_at?: string | null;
         }>;
         links: any[];
+        total?: number;
+        from?: number;
+        to?: number;
+        current_page?: number;
+        last_page?: number;
+        per_page?: number;
     };
     classRooms: Array<{
         id: number;
@@ -105,6 +115,14 @@ const toggleSelectAll = () => {
         selectedStudentIds.value = [];
     }
 };
+
+watch(selectedStudentIds, (newVal) => {
+    if (props.students.data.length > 0 && newVal.length === props.students.data.length) {
+        selectAll.value = true;
+    } else {
+        selectAll.value = false;
+    }
+});
 
 const moveToDraft = (student: any) => {
     confirm.require({
@@ -505,205 +523,234 @@ const getStatusLabel = (status?: string) => {
                     </div>
                 </div>
 
-                <!-- Table Content -->
-                <div v-if="students.data.length > 0" class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr
-                                class="border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50/50"
-                            >
-                                <th
-                                    v-if="canManageStudents"
-                                    class="py-3 pl-4 w-12 rounded-tl-lg"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        v-model="selectAll"
-                                        @change="toggleSelectAll"
-                                        class="rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1] w-4 h-4"
-                                    />
-                                </th>
-                                <th
-                                    class="py-3 px-4"
-                                    :class="
-                                        !canManageStudents
-                                            ? 'rounded-tl-lg'
-                                            : ''
-                                    "
-                                >
-                                    NIS
-                                </th>
-                                <th class="py-3 px-4">Siswa</th>
-                                <th class="py-3 px-4">Kelas</th>
-                                <th class="py-3 px-4">Orang Tua</th>
-                                <th class="py-3 px-4 text-center">
-                                    Poin Bersih
-                                </th>
-                                <th class="py-3 px-4 text-center">
-                                    Status Disiplin
-                                </th>
-                                <th class="py-3 px-4 text-center rounded-tr-lg">
-                                    Aksi
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 text-sm">
-                            <tr
-                                v-for="student in students.data"
-                                :key="student.id"
-                                class="hover:bg-gray-50/80 transition-colors group"
-                            >
-                                <td v-if="canManageStudents" class="py-3 pl-4">
-                                    <input
-                                        type="checkbox"
-                                        :value="student.id"
-                                        v-model="selectedStudentIds"
-                                        class="rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1] w-4 h-4"
-                                    />
-                                </td>
-                                <td
-                                    class="py-3 px-4 font-mono text-sm text-gray-600"
-                                >
-                                    {{ student.nis }}
-                                </td>
-                                <td class="py-3 px-4">
-                                    <Link
-                                        :href="`/students/${student.id}`"
-                                        class="font-bold text-gray-900 hover:text-indigo-600 transition-colors text-base"
-                                    >
-                                        {{ student.name }}
-                                    </Link>
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        Status: {{ student.status }}
-                                    </div>
-                                </td>
-                                <td
-                                    class="py-3 px-4 font-semibold text-gray-700"
-                                >
-                                    {{
-                                        student.class_room?.name ||
-                                        "Tanpa Kelas"
-                                    }}
-                                </td>
-                                <td class="py-3 px-4 text-gray-700">
-                                    <div class="font-semibold">
-                                        {{
-                                            student.parent_name ||
-                                            "Belum Dicantumkan"
-                                        }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        {{
-                                            student.parent_phone ||
-                                            "Nomor Tidak Terdaftar"
-                                        }}
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    <span class="text-sm font-semibold">
-                                        {{ student.net_points ?? 0 }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    <span
-                                        :class="
-                                            getStatusBadgeClass(
-                                                student.risk_status,
-                                            )
-                                        "
-                                        class="inline-flex px-3 py-1 rounded-md text-xs font-bold shadow-sm tracking-wide"
-                                    >
-                                        {{
-                                            getStatusLabel(student.risk_status)
-                                        }}
-                                    </span>
-                                </td>
-                                <td
-                                    class="py-3 px-4 text-center whitespace-nowrap"
-                                >
-                                    <div
-                                        class="inline-flex items-center gap-2 justify-center w-full"
-                                    >
-                                        <!-- Active Tab Actions -->
-                                        <template
-                                            v-if="currentTab === 'active'"
-                                        >
-                                            <Link
-                                                :href="`/students/${student.id}`"
-                                                v-tooltip.top="'Lihat Detail'"
-                                                class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors border border-transparent hover:border-gray-300"
-                                            >
-                                                <i
-                                                    class="pi pi-eye text-sm"
-                                                ></i>
-                                            </Link>
-                                            <Link
-                                                v-if="canManageStudents"
-                                                :href="`/students/${student.id}/edit`"
-                                                v-tooltip.top="'Edit Siswa'"
-                                                class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors border border-transparent hover:border-gray-300"
-                                            >
-                                                <i
-                                                    class="pi pi-pencil text-sm"
-                                                ></i>
-                                            </Link>
-                                            <Link
-                                                :href="`/students/${student.id}/print-card`"
-                                                v-tooltip.top="'Cetak Kartu'"
-                                                class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors border border-transparent hover:border-gray-300"
-                                            >
-                                                <i
-                                                    class="pi pi-print text-sm"
-                                                ></i>
-                                            </Link>
-                                            <button
-                                                v-if="canManageStudents"
-                                                @click="moveToDraft(student)"
-                                                v-tooltip.top="'Hapus ke Draft'"
-                                                class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors border border-transparent hover:border-red-200"
-                                            >
-                                                <i
-                                                    class="pi pi-trash text-sm"
-                                                ></i>
-                                            </button>
-                                        </template>
-
-                                        <!-- Draft Tab Actions -->
-                                        <template v-else>
-                                            <button
-                                                @click="restoreStudent(student)"
-                                                class="px-4 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm"
-                                            >
-                                                <i
-                                                    class="pi pi-refresh text-xs"
-                                                ></i>
-                                                Pulihkan
-                                            </button>
-                                            <button
-                                                @click="
-                                                    forceDeleteStudent(student)
-                                                "
-                                                class="px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm"
-                                            >
-                                                <i
-                                                    class="pi pi-times text-xs"
-                                                ></i>
-                                                Hapus Permanen
-                                            </button>
-                                        </template>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div
-                        class="mt-6 flex justify-between items-center text-sm text-gray-500 border-t border-gray-100 pt-4"
-                    >
-                        <span
-                            >Menampilkan {{ students.data.length }} siswa dari
-                            total data.</span
+                <!-- Selection Action Bar -->
+                <div
+                    v-if="selectedStudentIds.length > 0"
+                    class="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-indigo-50 border border-indigo-100 text-xs text-indigo-900"
+                >
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-check-circle text-[#6366F1] text-sm"></i>
+                        <span><strong>{{ selectedStudentIds.length }}</strong> siswa dipilih di halaman ini.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            v-if="currentTab === 'active'"
+                            type="button"
+                            @click="bulkDraftSelected"
+                            class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
                         >
+                            <i class="pi pi-inbox text-[11px]"></i>
+                            <span>Pindahkan ke Draft</span>
+                        </button>
+                        <button
+                            v-if="currentTab === 'draft'"
+                            type="button"
+                            @click="bulkRestoreSelected"
+                            class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <i class="pi pi-refresh text-[11px]"></i>
+                            <span>Pulihkan Siswa Terpilih</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="selectedStudentIds = []; selectAll = false;"
+                            class="px-2.5 py-1.5 text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
+                        >
+                            Batal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Content (Interactive PrimeVue DataTable) -->
+                <div v-if="students.data.length > 0" class="space-y-4">
+                    <DataTable
+                        :value="students.data"
+                        responsiveLayout="stack"
+                        breakpoint="768px"
+                        class="p-datatable-sm"
+                        removableSort
+                        emptyMessage="Tidak ada data siswa ditemukan."
+                        :pt="{
+                            table: { class: 'w-full text-left border-collapse' },
+                            thead: { class: 'bg-gray-50/70 border-b border-gray-200' },
+                            headerRow: { class: 'border-b border-gray-200' },
+                            row: { class: 'border-b border-gray-100 hover:bg-gray-50/80 transition-colors' }
+                        }"
+                    >
+                        <Column v-if="canManageStudents" class="py-3.5 pl-4 w-12 text-center" headerClass="py-3 pl-4 w-12">
+                            <template #header>
+                                <input
+                                    type="checkbox"
+                                    v-model="selectAll"
+                                    @change="toggleSelectAll"
+                                    class="rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1] w-4 h-4 cursor-pointer"
+                                    title="Pilih semua siswa di halaman ini"
+                                />
+                            </template>
+                            <template #body="{ data }">
+                                <input
+                                    type="checkbox"
+                                    :value="data.id"
+                                    v-model="selectedStudentIds"
+                                    class="rounded border-gray-300 text-[#6366F1] focus:ring-[#6366F1] w-4 h-4 cursor-pointer"
+                                />
+                            </template>
+                        </Column>
+
+                        <Column field="nis" header="NIS" sortable class="py-3.5 px-4 font-mono text-xs font-semibold text-gray-700 w-28">
+                            <template #body="{ data }">
+                                <span class="font-mono text-xs font-medium text-gray-600">{{ data.nis }}</span>
+                            </template>
+                        </Column>
+
+                        <Column field="name" header="Siswa" sortable class="py-3.5 px-4 font-semibold text-gray-900">
+                            <template #body="{ data }">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-100">
+                                        {{ (data.name || 'S').charAt(0).toUpperCase() }}
+                                    </div>
+                                    <div>
+                                        <Link
+                                            :href="`/students/${data.id}`"
+                                            class="font-bold text-gray-900 hover:text-[#6366F1] transition-colors text-sm"
+                                        >
+                                            {{ data.name }}
+                                        </Link>
+                                        <div class="text-[11px] text-gray-400 mt-0.5">
+                                            Status: <span class="capitalize">{{ data.status }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="class_room.name" header="Kelas" sortable class="py-3.5 px-4 text-xs font-semibold text-gray-700 w-36">
+                            <template #body="{ data }">
+                                <span class="inline-flex px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800">
+                                    {{ data.class_room?.name || 'Tanpa Kelas' }}
+                                </span>
+                            </template>
+                        </Column>
+
+                        <Column header="Orang Tua / Wali" class="py-3.5 px-4 text-xs text-gray-700">
+                            <template #body="{ data }">
+                                <div class="font-semibold text-gray-900 text-xs">
+                                    {{ data.parent_name || 'Belum Dicantumkan' }}
+                                </div>
+                                <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5">
+                                    <i v-if="data.parent_phone" class="pi pi-whatsapp text-emerald-600 text-[10px]"></i>
+                                    <span>{{ data.parent_phone || 'Nomor Tidak Terdaftar' }}</span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="net_points" header="Poin Bersih" sortable class="py-3.5 px-4 text-center w-28">
+                            <template #body="{ data }">
+                                <div class="text-center">
+                                    <span class="text-sm font-bold" :class="(data.net_points ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'">
+                                        {{ data.net_points ?? 0 }}
+                                    </span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column field="risk_status" header="Status Disiplin" sortable class="py-3.5 px-4 text-center w-36">
+                            <template #body="{ data }">
+                                <div class="text-center">
+                                    <span
+                                        :class="getStatusBadgeClass(data.risk_status)"
+                                        class="inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold shadow-xs tracking-wide"
+                                    >
+                                        {{ getStatusLabel(data.risk_status) }}
+                                    </span>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <Column header="Aksi" class="py-3.5 px-4 text-center w-36">
+                            <template #body="{ data }">
+                                <div class="inline-flex items-center gap-1.5 justify-center w-full">
+                                    <!-- Active Tab Actions -->
+                                    <template v-if="currentTab === 'active'">
+                                        <Link
+                                            :href="`/students/${data.id}`"
+                                            class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
+                                            title="Lihat Detail Siswa"
+                                        >
+                                            <i class="pi pi-eye text-xs"></i>
+                                        </Link>
+                                        <Link
+                                            v-if="canManageStudents"
+                                            :href="`/students/${data.id}/edit`"
+                                            class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
+                                            title="Edit Data Siswa"
+                                        >
+                                            <i class="pi pi-pencil text-xs"></i>
+                                        </Link>
+                                        <Link
+                                            :href="`/students/${data.id}/print-card`"
+                                            class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors"
+                                            title="Cetak Kartu Disiplin"
+                                        >
+                                            <i class="pi pi-print text-xs"></i>
+                                        </Link>
+                                        <button
+                                            v-if="canManageStudents"
+                                            type="button"
+                                            @click="moveToDraft(data)"
+                                            class="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                                            title="Pindahkan ke Draft Hapus"
+                                        >
+                                            <i class="pi pi-trash text-xs"></i>
+                                        </button>
+                                    </template>
+
+                                    <!-- Draft Tab Actions -->
+                                    <template v-else>
+                                        <button
+                                            type="button"
+                                            @click="restoreStudent(data)"
+                                            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                                        >
+                                            <i class="pi pi-refresh text-xs"></i>
+                                            Pulihkan
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="forceDeleteStudent(data)"
+                                            class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                                        >
+                                            <i class="pi pi-times text-xs"></i>
+                                            Hapus Permanen
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+                        </Column>
+                    </DataTable>
+
+                    <!-- Pagination Footer -->
+                    <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-4">
+                        <div>
+                            Menampilkan <span class="font-bold text-gray-900">{{ students.from || (students.data.length > 0 ? 1 : 0) }}</span> sampai <span class="font-bold text-gray-900">{{ students.to || students.data.length }}</span> dari <span class="font-bold text-gray-900">{{ students.total || students.data.length }}</span> data siswa.
+                        </div>
+
+                        <div v-if="students.links && students.links.length > 3" class="flex flex-wrap items-center justify-center gap-1">
+                            <Link
+                                v-for="(link, index) in students.links"
+                                :key="index"
+                                :href="link.url || '#'"
+                                class="min-w-[32px] h-8 flex items-center justify-center px-2.5 text-xs font-semibold rounded-lg transition-all"
+                                :class="[
+                                    link.active
+                                        ? 'bg-[#6366F1] text-white shadow-xs'
+                                        : 'text-gray-600 hover:bg-gray-100',
+                                    !link.url && 'opacity-40 cursor-not-allowed hover:bg-transparent'
+                                ]"
+                                v-html="link.label"
+                                preserve-scroll
+                            />
+                        </div>
                     </div>
                 </div>
 
