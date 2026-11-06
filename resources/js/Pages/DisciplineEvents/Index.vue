@@ -37,6 +37,7 @@ const eventType = ref(props.filters.event_type || '');
 const page = usePage();
 const userRoles = computed<string[]>(() => (page.props.auth as any)?.roles || []);
 const canDelete = computed(() => userRoles.value.includes('Super Admin') || userRoles.value.includes('Tata Tertib'));
+const canCreate = computed(() => userRoles.value.some((r) => ['Super Admin', 'Tata Tertib', 'Teacher', 'BK'].includes(r)));
 
 function debounce(fn: Function, delay: number) {
   let timeoutId: ReturnType<typeof setTimeout>;
@@ -124,17 +125,41 @@ const sendWhatsAppEvent = (item: any) => {
 </script>
 
 <template>
-    <Head title="Pencatatan Kedisiplinan - Sekolah Disiplin" />
+    <Head title="Catatan Kedisiplinan - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
-        <div class="max-w-[1400px] mx-auto space-y-8">
+        <template #header>
+            <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
+                <span class="text-gray-900 font-semibold">Catatan Kedisiplinan</span>
+            </div>
+        </template>
+
+        <div class="max-w-[1400px] mx-auto space-y-6">
             
+            <!-- Module Switcher Tabs -->
+            <div class="flex items-center gap-2 border-b border-gray-200 pb-3">
+                <Link
+                    href="/discipline-events"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 bg-[#001AFF] text-white shadow-xs"
+                >
+                    <i class="pi pi-list text-[11px]"></i>
+                    <span>Jurnal Catatan Kejadian</span>
+                </Link>
+                <Link
+                    href="/discipline-recap"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                >
+                    <i class="pi pi-chart-pie text-[11px]"></i>
+                    <span>Rekapitulasi Poin</span>
+                </Link>
+            </div>
+
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-[28px] font-bold text-gray-900 tracking-tight">Catatan Kedisiplinan</h1>
-                    <p class="text-gray-500 text-[15px] mt-1">Lihat rekam jejak pelanggaran dan prestasi siswa secara real-time.</p>
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Jurnal Catatan Kedisiplinan</h1>
+                    <p class="text-gray-500 text-sm mt-1">Rekam jejak real-time pelanggaran tata tertib dan perolehan prestasi siswa.</p>
                 </div>
-                <div class="flex gap-3">
+                <div v-if="canCreate" class="flex gap-3">
                     <Link href="/discipline-events/create" class="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-colors shadow-glow flex items-center gap-2">
                         <i class="pi pi-plus text-xs"></i> Input Kejadian Baru
                     </Link>

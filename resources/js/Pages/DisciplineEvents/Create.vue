@@ -271,16 +271,16 @@ const formatDate = (dateString: string) => {
 </script>
 
 <template>
-    <Head title="Catat Kejadian - Sekolah Disiplin" />
+    <Head title="Input Kejadian Baru - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex items-center gap-2 text-sm font-medium">
                 <Link href="/discipline-events" class="text-gray-500 hover:text-gray-900 transition-colors">
-                    Pencatatan Kedisiplinan
+                    Catatan Kedisiplinan
                 </Link>
                 <span class="text-gray-300">/</span>
-                <span class="font-semibold text-gray-900">Catat Kejadian Baru</span>
+                <span class="font-semibold text-gray-900">Input Kejadian Baru</span>
             </div>
         </template>
 
@@ -297,9 +297,10 @@ const formatDate = (dateString: string) => {
                 <div class="flex items-center gap-3">
                     <Link
                         href="/discipline-events"
-                        class="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-xs"
+                        class="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-xs flex items-center gap-1.5"
                     >
-                        Riwayat Kejadian
+                        <i class="pi pi-arrow-left text-[10px]"></i>
+                        <span>Lihat Jurnal Catatan</span>
                     </Link>
                     <Link
                         href="/master-data"

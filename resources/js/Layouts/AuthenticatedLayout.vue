@@ -136,10 +136,10 @@ const mainNavItems: NavItem[] = [
         roles: ["Super Admin", "Tata Tertib", "BK", "Teacher", "Principal"],
     },
     {
-        label: "Catat Kejadian",
-        href: "/discipline-events/create",
-        icon: "pi pi-plus-circle",
-        roles: ["Super Admin", "Tata Tertib", "Teacher", "BK"],
+        label: "Catatan Disiplin",
+        href: "/discipline-events",
+        icon: "pi pi-clipboard",
+        roles: ["Super Admin", "Tata Tertib", "BK", "Teacher", "Principal"],
     },
     {
         label: "Pembinaan",

@@ -88,13 +88,39 @@ const exportPdf = () => {
     <Head title="Rekap Disiplin - Sekolah Disiplin" />
 
     <AuthenticatedLayout>
+        <template #header>
+            <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
+                <Link href="/discipline-events" class="text-gray-500 hover:text-gray-900 transition-colors">Catatan Kedisiplinan</Link>
+                <span class="text-gray-300">/</span>
+                <span class="text-gray-900 font-semibold">Rekap Disiplin</span>
+            </div>
+        </template>
+
         <div class="max-w-[1400px] mx-auto space-y-6">
             
+            <!-- Module Switcher Tabs -->
+            <div class="flex items-center gap-2 border-b border-gray-200 pb-3">
+                <Link
+                    href="/discipline-events"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                >
+                    <i class="pi pi-list text-[11px]"></i>
+                    <span>Jurnal Catatan Kejadian</span>
+                </Link>
+                <Link
+                    href="/discipline-recap"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 bg-[#001AFF] text-white shadow-xs"
+                >
+                    <i class="pi pi-chart-pie text-[11px]"></i>
+                    <span>Rekapitulasi Poin</span>
+                </Link>
+            </div>
+
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 class="text-[28px] font-bold text-gray-900 tracking-tight">Rekap Disiplin</h1>
-                    <p class="text-gray-500 text-[15px] mt-0.5">
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Rekapitulasi Kedisiplinan</h1>
+                    <p class="text-gray-500 text-sm mt-0.5">
                         Rekapitulasi komprehensif poin pelanggaran, prestasi, dan poin bersih per siswa.
                     </p>
                 </div>
