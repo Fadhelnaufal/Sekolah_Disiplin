@@ -50,6 +50,12 @@ class FollowUpController extends Controller
             $query->where('status', 'completed');
         }
 
+        // Per Page selection
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
         // Ordering: Overdue/Pending with closest due date first
         $followUps = $query->orderByRaw("
             CASE 
@@ -58,7 +64,7 @@ class FollowUpController extends Controller
                 WHEN status = 'pending' THEN 3
                 ELSE 4
             END ASC
-        ")->orderBy('due_date', 'asc')->latest()->paginate(15)->withQueryString();
+        ")->orderBy('due_date', 'asc')->latest()->paginate($perPage)->withQueryString();
 
         // Calculate counts
         $counts = [
@@ -84,7 +90,9 @@ class FollowUpController extends Controller
         return Inertia::render('FollowUps/Index', [
             'followUps' => $followUps,
             'counts' => $counts,
-            'filters' => $request->only(['search', 'status', 'student_id']),
+            'filters' => array_merge($request->only(['search', 'status', 'student_id']), [
+                'per_page' => $perPage,
+            ]),
             'students' => $students,
             'users' => $users,
         ]);

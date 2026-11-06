@@ -48,7 +48,12 @@ class CounselingRecordController extends Controller
             $query->where('status', $request->status);
         }
 
-        $records = $query->latest('date_scheduled')->paginate(10)->withQueryString();
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 10;
+        }
+
+        $records = $query->latest('date_scheduled')->paginate($perPage)->withQueryString();
 
         $students = Student::with('classRoom')
             ->whereIn('status', ['Active', 'aktif', 'Aktif'])
@@ -59,7 +64,9 @@ class CounselingRecordController extends Controller
             'records' => $records,
             'students' => $students,
             'can_create' => $user->can('create', CounselingRecord::class),
-            'filters' => $request->only(['category', 'status', 'search']),
+            'filters' => array_merge($request->only(['category', 'status', 'search']), [
+                'per_page' => $perPage,
+            ]),
             'categories' => [
                 'Konseling', 'Bimbingan Pribadi', 'Bimbingan Sosial',
                 'Akademik', 'Perilaku dan kedisiplinan', 'Sosial dan pertemanan',

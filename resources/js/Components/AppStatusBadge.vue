@@ -72,6 +72,13 @@ const config = computed<StatusConfig>(() => {
     }
 
     // 3. Follow Up / Counseling Progress
+    if (raw === 'SCHEDULED' || raw === 'TERJADWAL') {
+        return {
+            label: props.label || 'Terjadwal',
+            badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+            dotClass: 'bg-blue-500',
+        };
+    }
     if (raw === 'PENDING' || raw === 'MENUNGGU') {
         return {
             label: props.label || 'Menunggu',
@@ -79,18 +86,25 @@ const config = computed<StatusConfig>(() => {
             dotClass: 'bg-amber-500',
         };
     }
-    if (raw === 'IN_PROGRESS' || raw === 'DIPROSES' || raw === 'BERJALAN') {
+    if (raw === 'IN_PROGRESS' || raw === 'DIPROSES' || raw === 'BERJALAN' || raw === 'SEDANG BERJALAN') {
         return {
             label: props.label || 'Diproses',
             badgeClass: 'bg-indigo-50 text-[#001AFF] border-indigo-200',
             dotClass: 'bg-[#001AFF]',
         };
     }
-    if (raw === 'COMPLETED' || raw === 'SELESAI') {
+    if (raw === 'RESOLVED' || raw === 'COMPLETED' || raw === 'SELESAI') {
         return {
             label: props.label || 'Selesai',
             badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
             dotClass: 'bg-emerald-500',
+        };
+    }
+    if (raw === 'REFERRED' || raw === 'DIALIHKAN') {
+        return {
+            label: props.label || 'Dialihkan',
+            badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
+            dotClass: 'bg-purple-500',
         };
     }
     if (raw === 'OVERDUE' || raw === 'TERLAMBAT') {
@@ -154,3 +168,4 @@ const config = computed<StatusConfig>(() => {
         </span>
     </div>
 </template>
+

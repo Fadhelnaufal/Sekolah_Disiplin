@@ -95,3 +95,4 @@ Dengan selesainya fondasi komponen bersama, pekerjaan dapat dilanjutkan ke **Fas
 1. Migrasikan halaman Bimbingan Konseling (`/counseling-records`) menggunakan `AppPageHeader`, `AppTableToolbar`, `AppStatusBadge`, dan `AppDataTableWrapper` (atau PrimeVue DataTable langsung).
 2. Migrasikan halaman Tindak Lanjut (`/follow-ups`) menggunakan toolbar dan badge status tenggat waktu seragam.
 3. Migrasikan halaman data master (`/teachers`, `/class-rooms`, `/users`, `/audit-logs`) dengan mengganti `useConfirm` menggunakan helper `confirmDelete` SweetAlert2 yang baru.
+
