@@ -150,7 +150,7 @@ const getRiskBadgeClass = (status: string) => {
         <div class="max-w-[1400px] mx-auto space-y-6">
             <!-- Top Banner Card (Role-Aware Surface) -->
             <div class="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-blue-700 via-violet-600 to-blue-600 p-7 sm:p-8 text-white shadow-sm border border-indigo-900/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div class="space-y-2 max-w-2xl z-10">
+                <div class="space-y-2 max-w-2xl">
                     <span class="text-[11px] font-bold uppercase tracking-widest text-indigo-300 block">
                         {{ role_context?.banner.badge || 'RINGKASAN SEKOLAH' }}
                     </span>
@@ -162,7 +162,7 @@ const getRiskBadgeClass = (status: string) => {
                     </p>
                 </div>
 
-                <div class="z-10 shrink-0">
+                <div class="shrink-0">
                     <Link
                         :href="role_context?.banner.action_url || '/discipline-events/create'"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-semibold transition-all shadow-[0_4px_14px_#6366F140]"

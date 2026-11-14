@@ -581,7 +581,8 @@ const isNavActive = (href: string) => {
         <div class="flex-1 flex flex-col min-w-0 min-h-screen">
             <!-- Top Utility Bar / Header -->
             <header
-                class="h-16 md:h-20 bg-transparent flex items-center justify-between px-4 sm:px-8 shrink-0 z-10 w-full pt-2 md:pt-4 pb-2"
+                class="relative h-16 md:h-20 bg-transparent flex items-center justify-between px-4 sm:px-8 shrink-0 w-full pt-2 md:pt-4 pb-2"
+                :class="isUserDropdownOpen ? 'z-50' : 'z-20'"
             >
                 <!-- Sisi Kiri: Tombol Hamburger Mobile + Header Slot / Title -->
                 <div class="flex items-center gap-3 min-w-0">
@@ -606,7 +607,7 @@ const isNavActive = (href: string) => {
                 </div>
 
                 <!-- Sisi Kanan: User Profile & Settings Dropdown Menu -->
-                <div class="relative">
+                <div class="relative z-50">
                     <button
                         type="button"
                         @click="toggleUserDropdown"
