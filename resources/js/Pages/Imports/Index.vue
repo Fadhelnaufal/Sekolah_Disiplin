@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import { showAlert } from '@/utils';
 
 const props = defineProps({
     academicYears: Array,
@@ -87,7 +88,11 @@ const uploadFile = () => {
 
 const commitImport = () => {
     if (form.sheet === 'SETUP' && !confirmSetup.value) {
-        alert("Harap centang konfirmasi penimpaan konfigurasi SETUP sekolah.");
+        showAlert({
+            title: 'Konfirmasi Diperlukan',
+            text: 'Harap centang konfirmasi penimpaan konfigurasi SETUP sekolah sebelum melanjutkan.',
+            icon: 'warning',
+        });
         return;
     }
     
@@ -108,7 +113,11 @@ const commitImport = () => {
         currentStep.value = 3;
     })
     .catch((err) => {
-        alert(err.message);
+        showAlert({
+            title: 'Gagal Menyimpan Data',
+            text: err.message,
+            icon: 'error',
+        });
     })
     .finally(() => {
         isCommitting.value = false;

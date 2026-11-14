@@ -18,11 +18,18 @@ class AcademicYearController extends Controller
             $query->where('name', 'ilike', "%{$search}%");
         }
 
-        $academicYears = $query->orderBy('name', 'desc')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
+        $academicYears = $query->orderBy('name', 'desc')->paginate($perPage)->withQueryString();
 
         return Inertia::render('AcademicYears/Index', [
             'academicYears' => $academicYears,
-            'filters' => $request->only('search'),
+            'filters' => array_merge($request->only('search'), [
+                'per_page' => $perPage,
+            ]),
         ]);
     }
 

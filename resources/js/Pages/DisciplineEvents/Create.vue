@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
-import { buildDisciplineEventWhatsAppMessage, buildWhatsAppUrl } from '../../utils';
+import { buildDisciplineEventWhatsAppMessage, buildWhatsAppUrl, showAlert } from '../../utils';
 
 interface StudentItem {
     id: number;
@@ -201,7 +201,11 @@ const setEventType = (type: 'violation' | 'achievement') => {
 const submit = () => {
     if (entryMode.value === 'bulk') {
         if (selectedStudentIds.value.length === 0) {
-            alert('Silakan pilih minimal 1 siswa untuk pencatatan massal.');
+            showAlert({
+                title: 'Pilih Siswa Terlebih Dahulu',
+                text: 'Silakan pilih minimal 1 siswa untuk melakukan pencatatan massal.',
+                icon: 'warning',
+            });
             return;
         }
         form.student_ids = selectedStudentIds.value;
@@ -252,7 +256,11 @@ const sendWhatsAppRecentEvent = (item: RecentEventItem) => {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(message);
         }
-        alert('Nomor WhatsApp orang tua belum terdaftar di profil siswa. Draf pesan telah disalin ke clipboard Anda.');
+        showAlert({
+            title: 'Nomor WhatsApp Belum Terdaftar',
+            text: 'Nomor WhatsApp orang tua belum terdaftar di profil siswa. Draf pesan resmi telah disalin ke clipboard Anda.',
+            icon: 'info',
+        });
         window.open(buildWhatsAppUrl('', message), '_blank');
         return;
     }

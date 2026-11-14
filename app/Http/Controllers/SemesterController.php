@@ -24,13 +24,20 @@ class SemesterController extends Controller
             $query->where('academic_year_id', $request->input('academic_year_id'));
         }
 
-        $semesters = $query->orderBy('start_date', 'desc')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
+        $semesters = $query->orderBy('start_date', 'desc')->paginate($perPage)->withQueryString();
         $academicYears = AcademicYear::orderBy('name', 'desc')->get(['id', 'name']);
 
         return Inertia::render('Semesters/Index', [
             'semesters' => $semesters,
             'academicYears' => $academicYears,
-            'filters' => $request->only('search', 'academic_year_id'),
+            'filters' => array_merge($request->only('search', 'academic_year_id'), [
+                'per_page' => $perPage,
+            ]),
         ]);
     }
 

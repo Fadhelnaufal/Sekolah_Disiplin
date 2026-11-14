@@ -1,169 +1,286 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { useConfirm } from 'primevue/useconfirm';
-import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import AppPageHeader from '@/Components/AppPageHeader.vue';
+import AppTableToolbar from '@/Components/AppTableToolbar.vue';
+import AppStatusBadge from '@/Components/AppStatusBadge.vue';
+import AppEmptyState from '@/Components/AppEmptyState.vue';
+import { confirmDelete } from '@/utils';
+
+interface AcademicYearItem {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+    status: string;
+}
+
+interface PaginatedAcademicYears {
+    data: AcademicYearItem[];
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+    total?: number;
+    from?: number;
+    to?: number;
+    current_page?: number;
+    last_page?: number;
+    per_page?: number;
+}
 
 const props = defineProps<{
-    academicYears: {
-        data: Array<{
-            id: number;
-            name: string;
-            start_date: string;
-            end_date: string;
-            status: string;
-        }>;
-        links: any[];
-    };
+    academicYears: PaginatedAcademicYears;
     filters: {
         search?: string;
+        per_page?: string | number;
     };
 }>();
 
-const confirm = useConfirm();
 const search = ref(props.filters.search || '');
+const perPage = ref(String(props.filters.per_page || props.academicYears.per_page || '15'));
 
-function debounce(fn: Function, delay: number) {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: any[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-}
+const hasActiveFilters = computed(() => {
+    return Boolean(
+        search.value ||
+        (perPage.value && perPage.value !== '15')
+    );
+});
 
-watch(search, debounce((value: string) => {
-    router.get('/academic-years', { search: value }, { preserveState: true, replace: true });
-}, 300));
-
-const deleteAcademicYear = (id: number) => {
-    confirm.require({
-        message: 'Apakah Anda yakin ingin menghapus data tahun ajaran ini?',
-        header: 'Konfirmasi Hapus Tahun Ajaran',
-        icon: 'pi pi-exclamation-triangle',
-        acceptProps: { severity: 'danger' },
-        accept: () => {
-            router.delete(`/academic-years/${id}`);
+const applyFilters = () => {
+    router.get(
+        '/academic-years',
+        {
+            search: search.value || undefined,
+            per_page: perPage.value !== '15' ? perPage.value : undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
         }
+    );
+};
+
+const resetFilters = () => {
+    search.value = '';
+    perPage.value = '15';
+    applyFilters();
+};
+
+let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+watch(search, () => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        applyFilters();
+    }, 350);
+});
+
+const promptDelete = async (year: AcademicYearItem) => {
+    const confirmed = await confirmDelete({
+        title: 'Hapus Tahun Ajaran?',
+        text: `Apakah Anda yakin ingin menghapus data tahun ajaran "${year.name}"? Tindakan ini tidak dapat dibatalkan.`,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
     });
+
+    if (confirmed) {
+        router.delete(`/academic-years/${year.id}`, {
+            preserveScroll: true,
+        });
+    }
 };
 
 const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
     const d = new Date(dateStr);
-    return new Intl.DateTimeFormat('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
+    return new Intl.DateTimeFormat('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    }).format(d);
 };
 </script>
 
 <template>
-    <Head title="Tahun Ajaran - Sekolah Disiplin" />
+    <Head title="Tahun Ajaran - DISIPLIN PRO" />
 
     <AuthenticatedLayout>
+        <!-- Header slot with breadcrumbs -->
         <template #header>
-            <div class="flex items-center gap-3 w-full pr-4 text-sm font-medium">
-                <Link href="/settings" class="text-gray-500 hover:text-gray-900 transition-colors">Pengaturan</Link>
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+                <Link href="/settings" class="hover:text-gray-900 transition-colors">Pengaturan</Link>
                 <span class="text-gray-300">/</span>
                 <span class="text-gray-900 font-semibold">Tahun Ajaran</span>
             </div>
         </template>
 
         <div class="max-w-[1400px] mx-auto space-y-6">
-            <!-- Header Area -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-[28px] font-bold text-gray-900 tracking-tight">Tahun Ajaran</h1>
-                    <p class="text-gray-500 text-[15px] mt-0.5">Kelola daftar tahun ajaran dan konfigurasi periode akademik aktif.</p>
-                </div>
-                <Link 
-                    href="/academic-years/create" 
-                    class="px-5 py-2.5 rounded-full bg-[#6366F1] hover:bg-[#4F46E5] text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5"
-                >
-                    <i class="pi pi-plus text-xs"></i>
-                    <span>Tambah Tahun Ajaran</span>
-                </Link>
-            </div>
-
-            <!-- Card Container -->
-            <div class="bg-white rounded-[24px] p-7 shadow-[0_2px_20px_#00000006] space-y-5">
-                <!-- Toolbar (Search) -->
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div class="relative w-full sm:w-80">
-                        <i class="pi pi-search absolute left-3.5 top-3 text-gray-400 text-xs"></i>
-                        <input 
-                            v-model="search"
-                            type="text" 
-                            placeholder="Cari tahun ajaran..." 
-                            class="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
+            <!-- Standardized Page Header -->
+            <AppPageHeader
+                title="Tahun Ajaran"
+                description="Kelola periode kalender akademik tahunan dan status keaktifan tahun ajaran sekolah."
+                badge="Konfigurasi Akademik"
+                badge-icon="pi pi-calendar"
+            >
+                <template #actions>
+                    <div class="flex items-center gap-2.5">
+                        <Link
+                            href="/semesters"
+                            class="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors shadow-2xs inline-flex items-center gap-1.5 cursor-pointer"
                         >
+                            <i class="pi pi-clock text-[11px]"></i>
+                            <span>Kelola Semester</span>
+                        </Link>
+
+                        <Link
+                            href="/academic-years/create"
+                            class="px-5 py-2 rounded-full bg-[#001AFF] hover:bg-[#0015cc] text-white text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                        >
+                            <i class="pi pi-plus text-xs"></i>
+                            <span>Tambah Tahun Ajaran</span>
+                        </Link>
+                    </div>
+                </template>
+            </AppPageHeader>
+
+            <!-- Table & Filter Card -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-5 space-y-4">
+                <!-- Standardized AppTableToolbar -->
+                <AppTableToolbar
+                    v-model="search"
+                    search-placeholder="Cari tahun ajaran (misal: 2024/2025)..."
+                    search-width="w-full sm:w-80"
+                    :total-records="academicYears.total"
+                    :filtered-records="academicYears.data.length"
+                    record-label="tahun ajaran"
+                    :has-active-filters="hasActiveFilters"
+                    @reset="resetFilters"
+                >
+                    <template #filters>
+                        <!-- Filter: Per Page -->
+                        <div class="w-full sm:w-32">
+                            <select
+                                v-model="perPage"
+                                @change="applyFilters"
+                                class="w-full px-3.5 py-2 text-xs rounded-full bg-gray-50 border border-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#001AFF] cursor-pointer"
+                            >
+                                <option value="10">10 / halaman</option>
+                                <option value="15">15 / halaman</option>
+                                <option value="25">25 / halaman</option>
+                                <option value="50">50 / halaman</option>
+                            </select>
+                        </div>
+                    </template>
+                </AppTableToolbar>
+
+                <!-- PrimeVue DataTable Section -->
+                <div v-if="academicYears.data && academicYears.data.length > 0" class="overflow-x-auto">
+                    <DataTable
+                        :value="academicYears.data"
+                        responsiveLayout="stack"
+                        breakpoint="768px"
+                        class="p-datatable-sm"
+                        removableSort
+                        :pt="{
+                            table: { class: 'w-full text-left border-collapse text-xs' },
+                            thead: { class: 'bg-gray-50/70 border-b border-gray-200' },
+                            headerRow: { class: 'border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-500' },
+                            row: { class: 'border-b border-gray-100 hover:bg-gray-50/80 transition-colors' }
+                        }"
+                    >
+                        <!-- Kolom 1: Nama Tahun Ajaran -->
+                        <Column field="name" header="Tahun Ajaran" sortable class="py-3 px-4 font-semibold text-gray-900 min-w-[200px]">
+                            <template #body="{ data }">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-100">
+                                        <i class="pi pi-calendar text-xs"></i>
+                                    </div>
+                                    <div class="font-bold text-gray-900 text-xs">
+                                        {{ data.name }}
+                                    </div>
+                                </div>
+                            </template>
+                        </Column>
+
+                        <!-- Kolom 2: Tanggal Mulai -->
+                        <Column field="start_date" header="Tanggal Mulai" sortable class="py-3 px-4 text-xs font-medium text-gray-700 w-44">
+                            <template #body="{ data }">
+                                {{ formatDate(data.start_date) }}
+                            </template>
+                        </Column>
+
+                        <!-- Kolom 3: Tanggal Selesai -->
+                        <Column field="end_date" header="Tanggal Selesai" sortable class="py-3 px-4 text-xs font-medium text-gray-700 w-44">
+                            <template #body="{ data }">
+                                {{ formatDate(data.end_date) }}
+                            </template>
+                        </Column>
+
+                        <!-- Kolom 4: Status -->
+                        <Column field="status" header="Status" sortable class="py-3 px-4 w-32 text-center">
+                            <template #body="{ data }">
+                                <AppStatusBadge :status="data.status" size="sm" />
+                            </template>
+                        </Column>
+
+                        <!-- Kolom 5: Aksi -->
+                        <Column header="Aksi" class="py-3 px-4 text-right w-28">
+                            <template #body="{ data }">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <Link
+                                        :href="`/academic-years/${data.id}/edit`"
+                                        class="px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors inline-flex items-center gap-1"
+                                        title="Edit Tahun Ajaran"
+                                    >
+                                        <i class="pi pi-pencil text-[10px]"></i>
+                                        <span>Edit</span>
+                                    </Link>
+
+                                    <button
+                                        type="button"
+                                        @click="promptDelete(data)"
+                                        class="px-2 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer inline-flex items-center gap-1"
+                                        title="Hapus Tahun Ajaran"
+                                    >
+                                        <i class="pi pi-trash text-[10px]"></i>
+                                    </button>
+                                </div>
+                            </template>
+                        </Column>
+                    </DataTable>
+
+                    <!-- Server-side Pagination Bar -->
+                    <div v-if="academicYears.links && academicYears.links.length > 3" class="p-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="text-xs text-gray-500">
+                            Menampilkan <strong>{{ academicYears.from || 0 }}</strong> sampai <strong>{{ academicYears.to || 0 }}</strong> dari <strong>{{ academicYears.total || academicYears.data.length }}</strong> data tahun ajaran
+                        </div>
+                        <div class="flex items-center gap-1 flex-wrap">
+                            <Link
+                                v-for="(link, index) in academicYears.links"
+                                :key="index"
+                                :href="link.url || '#'"
+                                class="min-w-[32px] h-8 flex items-center justify-center px-2.5 text-xs font-medium rounded-lg transition-colors"
+                                :class="[
+                                    link.active ? 'bg-[#001AFF] text-white font-bold' : 'text-gray-600 hover:bg-gray-100',
+                                    !link.url && 'opacity-40 cursor-not-allowed hover:bg-transparent'
+                                ]"
+                                v-html="link.label"
+                                preserve-scroll
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <!-- Data Table -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                                <th class="pb-3 text-left">Tahun Ajaran</th>
-                                <th class="pb-3 text-left">Tanggal Mulai</th>
-                                <th class="pb-3 text-left">Tanggal Selesai</th>
-                                <th class="pb-3 w-28 text-center">Status</th>
-                                <th class="pb-3 w-32 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50 text-sm">
-                            <tr v-for="ay in academicYears.data" :key="ay.id" class="hover:bg-gray-50/60 transition-colors">
-                                <td class="py-4 text-gray-900 font-bold">{{ ay.name }}</td>
-                                <td class="py-4 text-xs text-gray-600">{{ formatDate(ay.start_date) }}</td>
-                                <td class="py-4 text-xs text-gray-600">{{ formatDate(ay.end_date) }}</td>
-                                <td class="py-4 text-center">
-                                    <span 
-                                        class="inline-flex px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider"
-                                        :class="(ay.status.toLowerCase() === 'active' || ay.status.toLowerCase() === 'aktif') ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-600'"
-                                    >
-                                        {{ ay.status === 'Active' ? 'Aktif' : 'Tidak Aktif' }}
-                                    </span>
-                                </td>
-                                <td class="py-4 text-right">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        <Link
-                                            :href="`/academic-years/${ay.id}/edit`"
-                                            class="w-7 h-7 rounded-full bg-gray-100 hover:bg-indigo-50 hover:text-[#6366F1] text-gray-600 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1]"
-                                            title="Edit Tahun Ajaran"
-                                        >
-                                            <i class="pi pi-pencil text-[11px]"></i>
-                                        </Link>
-                                        <button
-                                            @click="deleteAcademicYear(ay.id)"
-                                            class="w-7 h-7 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40"
-                                            title="Hapus Tahun Ajaran"
-                                        >
-                                            <i class="pi pi-trash text-[11px]"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr v-if="academicYears.data.length === 0">
-                                <td colspan="5" class="py-12 text-center text-gray-500 text-xs">
-                                    Tidak ada data tahun ajaran ditemukan.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div v-if="academicYears.links.length > 3" class="pt-4 border-t border-gray-100 flex items-center justify-center gap-1">
-                    <Link 
-                        v-for="(link, index) in academicYears.links" 
-                        :key="index"
-                        :href="link.url || '#'"
-                        class="min-w-[32px] h-8 flex items-center justify-center px-2 text-[13px] font-medium rounded-lg transition-colors"
-                        :class="[
-                            link.active ? 'bg-[#6366F1] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100',
-                            !link.url && 'opacity-40 cursor-not-allowed hover:bg-transparent'
-                        ]"
-                        v-html="link.label"
-                        preserve-scroll
-                    />
-                </div>
+                <!-- Empty State Component -->
+                <AppEmptyState
+                    v-else
+                    icon="pi pi-calendar"
+                    title="Belum Ada Tahun Ajaran"
+                    description="Tambahkan tahun ajaran baru untuk mengaktifkan konfigurasi periode kalender sekolah."
+                    action-label="Tambah Tahun Ajaran Baru"
+                    action-href="/academic-years/create"
+                />
             </div>
         </div>
     </AuthenticatedLayout>

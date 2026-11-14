@@ -3,6 +3,7 @@ import Swal from 'sweetalert2';
 import { ref, watch, computed } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout.vue';
+import AppStatusBadge from '@/Components/AppStatusBadge.vue';
 
 const props = defineProps<{
     student: {
@@ -259,11 +260,8 @@ const previewAttachment = (url: string) => {
                                 <p class="mt-0.5 text-gray-900 font-medium">{{ student.parent_phone || '-' }}</p>
                             </div>
                             <div>
-                                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status Siswa</p>
-                                <span class="mt-1 inline-flex px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md"
-                                    :class="(student.status.toLowerCase() === 'active' || student.status.toLowerCase() === 'aktif') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
-                                    {{ student.status }}
-                                </span>
+                                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Status Siswa</p>
+                                <AppStatusBadge :status="student.status" size="sm" />
                             </div>
                         </div>
                     </div>
@@ -277,10 +275,7 @@ const previewAttachment = (url: string) => {
                         <div class="py-2 flex flex-col items-center">
                             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Net Point</p>
                             <p class="text-4xl font-bold text-gray-900 mb-2">{{ summary.net_points }}</p>
-                            <span class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-md"
-                                :class="getStatusBadgeClass(summary.risk_status)">
-                                Status: {{ getStatusLabel(summary.risk_status) }}
-                            </span>
+                            <AppStatusBadge :status="summary.risk_status" size="md" />
                         </div>
                         <div class="grid grid-cols-2 gap-3 pt-2">
                             <div class="p-3.5 rounded-2xl bg-rose-50/60 border border-rose-100/60 text-center">
@@ -493,12 +488,7 @@ const previewAttachment = (url: string) => {
                                             <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-[#6366F1] border border-indigo-100">
                                                 {{ record.category }}
                                             </span>
-                                            <span 
-                                                class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
-                                                :class="getCounselingStatusBadge(record.status)"
-                                            >
-                                                {{ getCounselingStatusLabel(record.status) }}
-                                            </span>
+                                            <AppStatusBadge :status="record.status" size="sm" />
                                             <span 
                                                 v-if="record.confidentiality_level && record.confidentiality_level !== 'normal'"
                                                 class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
