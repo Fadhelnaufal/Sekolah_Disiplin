@@ -31,13 +31,20 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('name')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
+        $users = $query->orderBy('name')->paginate($perPage)->withQueryString();
 
         $availableRoles = Role::pluck('name');
 
         return Inertia::render('Users/Index', [
             'users' => $users,
-            'filters' => $request->only('search', 'role'),
+            'filters' => array_merge($request->only('search', 'role'), [
+                'per_page' => $perPage,
+            ]),
             'available_roles' => $availableRoles,
         ]);
     }

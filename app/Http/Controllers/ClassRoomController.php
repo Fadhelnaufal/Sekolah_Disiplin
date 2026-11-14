@@ -20,11 +20,18 @@ class ClassRoomController extends Controller
             $query->where('name', 'ilike', "%{$search}%");
         }
 
-        $classRooms = $query->orderBy('grade_level')->orderBy('name')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
+        $classRooms = $query->orderBy('grade_level')->orderBy('name')->paginate($perPage)->withQueryString();
 
         return Inertia::render('ClassRooms/Index', [
             'classRooms' => $classRooms,
-            'filters' => $request->only('search'),
+            'filters' => array_merge($request->only('search'), [
+                'per_page' => $perPage,
+            ]),
         ]);
     }
 

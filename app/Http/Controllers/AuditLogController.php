@@ -33,11 +33,18 @@ class AuditLogController extends Controller
             ]);
         }
 
-        $logs = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')->paginate($perPage)->withQueryString();
 
         return Inertia::render('AuditLogs/Index', [
             'logs' => $logs,
-            'filters' => $request->only('search', 'action_type', 'start_date', 'end_date'),
+            'filters' => array_merge($request->only('search', 'action_type', 'start_date', 'end_date'), [
+                'per_page' => $perPage,
+            ]),
         ]);
     }
 }

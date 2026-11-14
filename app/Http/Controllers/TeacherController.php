@@ -21,11 +21,18 @@ class TeacherController extends Controller
                 ->orWhere('employee_number', 'ilike', "%{$search}%");
         }
 
-        $teachers = $query->orderBy('name')->paginate(15)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50])) {
+            $perPage = 15;
+        }
+
+        $teachers = $query->orderBy('name')->paginate($perPage)->withQueryString();
 
         return Inertia::render('Teachers/Index', [
             'teachers' => $teachers,
-            'filters' => $request->only('search'),
+            'filters' => array_merge($request->only('search'), [
+                'per_page' => $perPage,
+            ]),
         ]);
     }
 
