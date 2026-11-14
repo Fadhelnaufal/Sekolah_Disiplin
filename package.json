@@ -23,6 +23,7 @@
         "@primevue/themes": "^4.5.4",
         "@vitejs/plugin-vue": "^6.0.9",
         "chart.js": "^4.5.1",
+        "motion-v": "^2.12.0",
         "primeicons": "^8.0.2",
         "primevue": "^4.5.5",
         "sweetalert2": "^11.26.25",

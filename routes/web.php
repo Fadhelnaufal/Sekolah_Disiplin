@@ -22,10 +22,13 @@ use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViolationController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', function () {
-    return redirect('/login');
-});
+    return Inertia::render('Welcome', [
+        'canLogin' => Route::has('login'),
+    ]);
+})->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
