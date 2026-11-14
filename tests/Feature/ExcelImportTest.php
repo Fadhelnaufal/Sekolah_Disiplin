@@ -10,6 +10,7 @@ use App\Models\Semester;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Violation;
+use App\Services\ExcelImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -231,5 +232,60 @@ class ExcelImportTest extends TestCase
 
         $this->assertEquals('valid', $previewSuccess[1]['status']);
         $this->assertEquals($this->semester->id, $previewSuccess[1]['data']['semester_id']); // Resolved correctly!
+    }
+
+    public function test_can_download_student_template_xlsx(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->get(route('imports.template', ['sheet' => 'DATA_SISWA']));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->assertStringContainsString('Template_Import_DataSiswa.xlsx', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_can_download_student_template_xlsx_via_students_route(): void
+    {
+        $response = $this->actingAs($this->adminUser)
+            ->get(route('students.template', ['format' => 'xlsx']));
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->assertStringContainsString('template_import_siswa.xlsx', (string) $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_downloaded_student_template_can_be_parsed_by_import_service(): void
+    {
+        $service = app(ExcelImportService::class);
+        $tempPath = $service->generateTemplate('DATA_SISWA');
+
+        $this->assertFileExists($tempPath);
+
+        // Ensure Classroom 'X MIPA 1' exists so the sample row validates
+        ClassRoom::firstOrCreate([
+            'school_id' => $this->school->id,
+            'name' => 'X MIPA 1',
+        ], [
+            'academic_year_id' => $this->academicYear->id,
+            'grade_level' => '10',
+        ]);
+        ClassRoom::firstOrCreate([
+            'school_id' => $this->school->id,
+            'name' => 'X MIPA 2',
+        ], [
+            'academic_year_id' => $this->academicYear->id,
+            'grade_level' => '10',
+        ]);
+
+        $previewResult = $service->parseAndPreview($tempPath, 'DATA_SISWA', [
+            'academic_year_id' => $this->academicYear->id,
+        ]);
+
+        $this->assertGreaterThan(0, $previewResult['stats']['valid']);
+        $this->assertEquals(0, $previewResult['stats']['invalid']);
+
+        if (file_exists($tempPath)) {
+            unlink($tempPath);
+        }
     }
 }

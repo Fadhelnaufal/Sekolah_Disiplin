@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Spatie\SimpleExcel\SimpleExcelReader;
+use Spatie\SimpleExcel\SimpleExcelWriter;
 
 class ExcelImportService
 {
@@ -47,9 +48,11 @@ class ExcelImportService
         $currentUser = auth()->user();
 
         // Caches for DB lookups
-        $classRooms = [];
+        $classRooms = collect();
         if ($academicYearId) {
             $classRooms = ClassRoom::where('academic_year_id', $academicYearId)->get()->keyBy('name');
+        } else {
+            $classRooms = ClassRoom::all()->keyBy('name');
         }
 
         $semesters = Semester::orderBy('start_date')->get();
@@ -144,9 +147,11 @@ class ExcelImportService
         $semesterId = $options['semester_id'] ?? null;
         $currentUser = auth()->user();
 
-        $classRooms = [];
+        $classRooms = collect();
         if ($academicYearId) {
             $classRooms = ClassRoom::where('academic_year_id', $academicYearId)->get()->keyBy('name');
+        } else {
+            $classRooms = ClassRoom::all()->keyBy('name');
         }
         $semesters = Semester::orderBy('start_date')->get();
         $violations = Violation::all()->keyBy('code');
@@ -651,5 +656,156 @@ class ExcelImportService
         }
 
         return ['status' => 'invalid', 'errors' => ['Sheet tidak dikenal']];
+    }
+
+    /**
+     * Generates an official Excel template (.xlsx) for the specified sheet.
+     * Returns the absolute path of the generated temporary file.
+     */
+    public function generateTemplate(string $sheet = 'DATA_SISWA'): string
+    {
+        $sheet = strtoupper(trim($sheet));
+        $tempPath = tempnam(sys_get_temp_dir(), 'template_'.strtolower($sheet).'_').'.xlsx';
+
+        $writer = SimpleExcelWriter::create($tempPath);
+        $writer->nameCurrentSheet($sheet);
+
+        $sampleRows = $this->getTemplateSampleData($sheet);
+        foreach ($sampleRows as $row) {
+            $writer->addRow($row);
+        }
+
+        $writer->close();
+
+        return $tempPath;
+    }
+
+    /**
+     * Returns structured sample data for template generation.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function getTemplateSampleData(string $sheet): array
+    {
+        return match ($sheet) {
+            'DATA_SISWA' => [
+                [
+                    'NO' => 1,
+                    'NIS' => '1001',
+                    'NAMA SISWA' => 'Ahmad Dahlan',
+                    'KELAS' => 'X MIPA 1',
+                    'WALI KELAS' => 'Drs. Suryanto, M.Pd',
+                    'NAMA ORANG TUA / WALI' => 'Budi Santoso',
+                    'NO. HP ORANG TUA' => '081234567890',
+                    'STATUS' => 'Active',
+                    'KETERANGAN' => 'Siswa Baru',
+                ],
+                [
+                    'NO' => 2,
+                    'NIS' => '1002',
+                    'NAMA SISWA' => 'Siti Fatimah',
+                    'KELAS' => 'X MIPA 1',
+                    'WALI KELAS' => 'Drs. Suryanto, M.Pd',
+                    'NAMA ORANG TUA / WALI' => 'Rahman Hakim',
+                    'NO. HP ORANG TUA' => '081298765432',
+                    'STATUS' => 'Active',
+                    'KETERANGAN' => 'Siswa Pindahan',
+                ],
+                [
+                    'NO' => 3,
+                    'NIS' => '1003',
+                    'NAMA SISWA' => 'Budi Wicaksono',
+                    'KELAS' => 'X MIPA 2',
+                    'WALI KELAS' => 'Nurul Hidayati, S.Pd',
+                    'NAMA ORANG TUA / WALI' => 'Joko Wicaksono',
+                    'NO. HP ORANG TUA' => '081311223344',
+                    'STATUS' => 'Active',
+                    'KETERANGAN' => '',
+                ],
+            ],
+            'MASTER_PELANGGARAN' => [
+                [
+                    'KODE' => 'PEL-01',
+                    'JENIS PELANGGARAN' => 'Terlambat Masuk Sekolah',
+                    'KATEGORI' => 'Kedisiplinan Waktu',
+                    'POIN' => 5,
+                    'KETERANGAN' => 'Terlambat lebih dari 15 menit',
+                ],
+                [
+                    'KODE' => 'PEL-02',
+                    'JENIS PELANGGARAN' => 'Seragam Tidak Sesuai Aturan',
+                    'KATEGORI' => 'Kerapian',
+                    'POIN' => 5,
+                    'KETERANGAN' => 'Atribut atau badge tidak lengkap',
+                ],
+            ],
+            'MASTER_PRESTASI' => [
+                [
+                    'KODE' => 'PRES-01',
+                    'NAMA PRESTASI' => 'Juara 1 OSN Matematika Kota',
+                    'KATEGORI' => 'Akademik',
+                    'POIN' => 25,
+                    'KETERANGAN' => 'Tingkat Kota / Kabupaten',
+                ],
+                [
+                    'KODE' => 'PRES-02',
+                    'NAMA PRESTASI' => 'Juara 1 FLS2N Seni Musik Tingkat Provinsi',
+                    'KATEGORI' => 'Non-Akademik',
+                    'POIN' => 35,
+                    'KETERANGAN' => 'Tingkat Provinsi',
+                ],
+            ],
+            'MASTER_SANKSI' => [
+                [
+                    'TINGKAT' => 1,
+                    'RENTANG MIN' => 10,
+                    'RENTANG MAX' => 20,
+                    'TINDAKAN SANKSI' => 'Teguran Lisan dan Pembinaan Wali Kelas',
+                    'PELAKSANA' => 'Wali Kelas',
+                    'KETERANGAN' => 'Peringatan awal',
+                ],
+                [
+                    'TINGKAT' => 2,
+                    'RENTANG MIN' => 21,
+                    'RENTANG MAX' => 40,
+                    'TINDAKAN SANKSI' => 'Surat Peringatan 1 dan Pemanggilan Orang Tua',
+                    'PELAKSANA' => 'Guru BK & Tim Tatib',
+                    'KETERANGAN' => 'Akumulasi poin sedang',
+                ],
+            ],
+            'CATATAN' => [
+                [
+                    'TANGGAL' => date('Y-m-d'),
+                    'NIS' => '1001',
+                    'KODE' => 'PEL-01',
+                    'POIN' => 5,
+                    'URAIAN / KRONOLOGI' => 'Terlambat masuk sekolah saat jam pelajaran pertama',
+                    'PENCATAT' => 'Pak Tatib',
+                ],
+            ],
+            'PEMBINAAN' => [
+                [
+                    'TANGGAL' => date('Y-m-d'),
+                    'NIS' => '1001',
+                    'MASALAH' => 'Sering terlambat dan kurang fokus belajar',
+                    'TINDAKAN' => 'Sesi konseling individual dan kontrak perilaku',
+                    'HASIL' => 'Dalam Pemantauan',
+                    'PENGURUS' => 'Ibu Guru BK',
+                ],
+            ],
+            default => [
+                [
+                    'NO' => 1,
+                    'NIS' => '1001',
+                    'NAMA SISWA' => 'Ahmad Dahlan',
+                    'KELAS' => 'X MIPA 1',
+                    'WALI KELAS' => 'Drs. Suryanto, M.Pd',
+                    'NAMA ORANG TUA / WALI' => 'Budi Santoso',
+                    'NO. HP ORANG TUA' => '081234567890',
+                    'STATUS' => 'Active',
+                    'KETERANGAN' => 'Siswa Baru',
+                ],
+            ],
+        };
     }
 }

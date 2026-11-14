@@ -430,11 +430,12 @@ const getStatusLabel = (status?: string) => {
                             Ubah Nama Kelas
                         </button>
                         <a
-                            href="/students/template"
+                            href="/students/template?format=xlsx"
+                            download
                             class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-2"
                         >
-                            <i class="pi pi-download text-xs"></i>
-                            Download Template
+                            <i class="pi pi-download text-xs text-[#001AFF]"></i>
+                            Download Template (.xlsx)
                         </a>
                         <Link
                             href="/imports"

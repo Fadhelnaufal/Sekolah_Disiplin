@@ -263,7 +263,18 @@ const getStatusBadgeConfig = (status: string) => {
                 description="Impor massal data induk siswa, master tata tertib, dan rekam kejadian kedisiplinan dari spreadsheet."
                 badge="Migrasi & Integrasi Data"
                 badge-icon="pi pi-file-excel"
-            />
+            >
+                <template #actions>
+                    <a
+                        :href="`/imports/template?sheet=${form.sheet || 'DATA_SISWA'}`"
+                        download
+                        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-white border border-gray-200 text-gray-700 hover:text-[#001AFF] hover:border-[#001AFF] hover:bg-indigo-50/20 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+                    >
+                        <i class="pi pi-download text-[#001AFF] text-xs"></i>
+                        <span>Unduh Template {{ form.sheet === 'DATA_SISWA' ? 'Siswa' : (sheetMeta[form.sheet]?.title || form.sheet) }} (.xlsx)</span>
+                    </a>
+                </template>
+            </AppPageHeader>
 
             <!-- Stepper Navigation Bar -->
             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
@@ -432,6 +443,35 @@ const getStatusBadgeConfig = (status: string) => {
 
                     <!-- Sisi Kanan: Unggah Berkas & Panduan (5 Kolom) -->
                     <div class="lg:col-span-5 space-y-5">
+                        <!-- Template Download Card -->
+                        <div class="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-white rounded-2xl border border-indigo-100 p-4 shadow-2xs space-y-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-9 h-9 rounded-xl bg-white border border-indigo-100 flex items-center justify-center text-[#001AFF] shadow-2xs shrink-0">
+                                        <i class="pi pi-file-excel text-base"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-gray-900">Template Resmi (.xlsx)</h4>
+                                        <p class="text-[11px] text-gray-500">Struktur kolom & nama sheet tervalidasi</p>
+                                    </div>
+                                </div>
+                                <a
+                                    :href="`/imports/template?sheet=${form.sheet || 'DATA_SISWA'}`"
+                                    download
+                                    class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#001AFF] text-white hover:bg-[#0015cc] shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+                                >
+                                    <i class="pi pi-download text-[11px]"></i>
+                                    <span>Unduh (.xlsx)</span>
+                                </a>
+                            </div>
+                            <div class="text-[11px] text-gray-600 bg-white/80 rounded-xl px-3 py-2 border border-indigo-50 flex items-center gap-2">
+                                <i class="pi pi-info-circle text-[#001AFF] shrink-0 text-xs"></i>
+                                <span>
+                                    Target sheet: <strong class="text-gray-900 font-semibold">{{ form.sheet }}</strong>. File template sudah mencakup contoh data dan struktur yang valid.
+                                </span>
+                            </div>
+                        </div>
+
                         <!-- Dropzone Card -->
                         <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
                             <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
@@ -484,6 +524,15 @@ const getStatusBadgeConfig = (status: string) => {
                                         Klik untuk memilih file <span class="text-gray-400 font-normal">atau seret ke sini</span>
                                     </p>
                                     <p class="text-[11px] text-gray-400">Microsoft Excel Spreadsheet (.xlsx)</p>
+                                    <a
+                                        :href="`/imports/template?sheet=${form.sheet || 'DATA_SISWA'}`"
+                                        @click.stop
+                                        download
+                                        class="inline-flex items-center gap-1 text-[11px] font-medium text-[#001AFF] hover:underline pt-1 cursor-pointer"
+                                    >
+                                        <i class="pi pi-download text-[10px]"></i>
+                                        <span>Unduh template kosong</span>
+                                    </a>
                                 </div>
                             </div>
 

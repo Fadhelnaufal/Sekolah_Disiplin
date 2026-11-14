@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\Teacher;
 use App\Services\AuditService;
 use App\Services\EarlyWarningEngineService;
+use App\Services\ExcelImportService;
 use App\Services\StudentPointService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -398,8 +399,17 @@ class StudentController extends Controller
         return redirect()->back()->with('success', "Nama kelas berhasil diperbarui menjadi {$classRoom->name}.");
     }
 
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request, ExcelImportService $excelService)
     {
+        if ($request->query('format') === 'xlsx') {
+            $filePath = $excelService->generateTemplate('DATA_SISWA');
+            $filename = 'template_import_siswa.xlsx';
+
+            return response()->download($filePath, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend(true);
+        }
+
         $filename = 'template_import_siswa.csv';
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',

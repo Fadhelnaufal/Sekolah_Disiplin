@@ -126,6 +126,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Excel Import
     Route::middleware(['role:Super Admin|Tata Tertib|BK'])->group(function () {
         Route::get('imports', [ImportController::class, 'index'])->name('imports.index');
+        Route::get('imports/template', [ImportController::class, 'template'])->name('imports.template');
         Route::post('imports/upload', [ImportController::class, 'upload'])->name('imports.upload');
         Route::post('imports/commit', [ImportController::class, 'commit'])->name('imports.commit');
     });

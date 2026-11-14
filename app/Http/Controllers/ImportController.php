@@ -129,4 +129,19 @@ class ImportController extends Controller
             return response()->json(['error' => 'Kegagalan sistem saat commit: '.$e->getMessage()], 500);
         }
     }
+
+    public function template(Request $request, ExcelImportService $service)
+    {
+        if (! auth()->user()->hasAnyRole(['Super Admin', 'Tata Tertib', 'BK'])) {
+            abort(403);
+        }
+
+        $sheet = (string) $request->query('sheet', 'DATA_SISWA');
+        $filePath = $service->generateTemplate($sheet);
+        $filename = 'Template_Import_'.Str::studly(strtolower($sheet)).'.xlsx';
+
+        return response()->download($filePath, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
 }
